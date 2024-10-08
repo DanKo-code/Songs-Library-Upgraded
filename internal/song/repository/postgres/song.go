@@ -3,6 +3,8 @@ package postgres
 import (
 	"SongsLibrary/internal/db/models"
 	"SongsLibrary/internal/song/dtos"
+	"errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -43,4 +45,21 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 	}
 
 	return songs, nil
+}
+
+func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
+	var songToDelete models.Song
+
+	if err := sr.db.First(&songToDelete, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	if err := sr.db.Delete(&models.Song{}, id).Error; err != nil {
+		return nil, err
+	}
+
+	return &songToDelete, nil
 }

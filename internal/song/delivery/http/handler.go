@@ -4,6 +4,7 @@ import (
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 )
@@ -43,4 +44,22 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"songs": songs})
+}
+
+func (h *Handler) DeleteSong(c *gin.Context) {
+	id := c.Param("id")
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Song ID format"})
+		return
+	}
+
+	deleteSong, err := h.useCase.DeleteSong(convertedId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"deleteSong": deleteSong})
 }
