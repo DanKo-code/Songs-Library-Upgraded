@@ -63,3 +63,11 @@ func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
 
 	return &songToDelete, nil
 }
+
+func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
+	if err := sr.db.Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate).Error; err != nil {
+		return nil, err
+	}
+
+	return fieldsToUpdate, nil
+}

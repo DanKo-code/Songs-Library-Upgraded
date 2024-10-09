@@ -9,7 +9,5 @@ import (
 type UseCase interface {
 	GetSongs(*dtos.GetSongsDTO) ([]models.Song, error)
 	DeleteSong(id uuid.UUID) (*models.Song, error)
-	/*GetSongText(ctx context.Context) (string, error)
-	UpdateSong(ctx context.Context) (*models.Song, error)
-	CreateSong(ctx context.Context) (*models.Song, error)*/
+	UpdateSong(*models.Song) (*models.Song, error)
 }
