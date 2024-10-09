@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type SongRepository struct {
@@ -70,4 +71,18 @@ func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song,
 	}
 
 	return fieldsToUpdate, nil
+}
+
+func (sr *SongRepository) CreateSong(group, song, lyrics, link, releaseDate string) (*models.Song, error) {
+	releaseDateCasted, err := time.Parse(time.RFC3339, releaseDate)
+	if err != nil {
+		return nil, err
+	}
+
+	var songToCreate *models.Song = &models.Song{ID: uuid.New(), Name: song, GroupName: group, Text: lyrics, Link: link, ReleaseDate: releaseDateCasted}
+	if err := sr.db.Create(&songToCreate).Error; err != nil {
+		return nil, err
+	}
+
+	return songToCreate, nil
 }

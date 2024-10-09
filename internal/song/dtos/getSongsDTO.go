@@ -11,3 +11,8 @@ type GetSongsDTO struct {
 	Page        int       `form:"page"`
 	PageSize    int       `form:"page_size"`
 }
+
+type CreateSongDTO struct {
+	Group string `form:"group"`
+	Song  string `form:"song"`
+}
