@@ -81,3 +81,19 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"Updated Song": updateSong})
 }
+
+func (h *Handler) CreateSong(c *gin.Context) {
+	var createSongDTO dtos.CreateSongDTO
+	if err := c.ShouldBindJSON(&createSongDTO); err != nil {
+		log.Println(err)
+		return
+	}
+
+	createSong, err := h.useCase.CreateSong(createSongDTO.Group, createSongDTO.Song)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Created Song": createSong})
+}

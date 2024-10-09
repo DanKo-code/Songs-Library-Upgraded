@@ -29,9 +29,15 @@ func NewApp() *App {
 	db := initDB()
 
 	songRepo := songpostgres.NewSongRepository(db)
+	musixMatchUseCase := songusecase.CreateMusixMatchUseCase(
+		os.Getenv("MMLAPI_BASE_URL"),
+		os.Getenv("MMLAPI_GET_SONG_IP_PATH"),
+		os.Getenv("MMLAPI_GET_LYRICS_PATH"),
+		os.Getenv("MMLAPI_API_KEY"),
+	)
 
 	return &App{
-		songUC: songusecase.NewSongUseCase(songRepo),
+		songUC: songusecase.NewSongUseCase(songRepo, musixMatchUseCase),
 	}
 }
 

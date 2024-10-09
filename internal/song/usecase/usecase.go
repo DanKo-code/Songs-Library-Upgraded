@@ -8,11 +8,12 @@ import (
 )
 
 type SongUseCase struct {
-	songRepo song.Repository
+	songRepo          song.Repository
+	musixMatchUseCase song.MusixmatchUseCase
 }
 
-func NewSongUseCase(songRepo song.Repository) *SongUseCase {
-	return &SongUseCase{songRepo: songRepo}
+func NewSongUseCase(songRepo song.Repository, musixMatchUseCase song.MusixmatchUseCase) *SongUseCase {
+	return &SongUseCase{songRepo: songRepo, musixMatchUseCase: musixMatchUseCase}
 }
 
 func (suc *SongUseCase) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
@@ -41,4 +42,25 @@ func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, e
 	}
 
 	return updatedSong, nil
+}
+
+func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
+
+	//send req for enrichment
+	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(group, song)
+	if err != nil {
+		return nil, err
+	}
+
+	lyrics, err := suc.musixMatchUseCase.GetLyrics(ip)
+	if err != nil {
+		return nil, err
+	}
+
+	createdSong, err := suc.songRepo.CreateSong(group, song, lyrics, link, releaseDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdSong, nil
 }
