@@ -1,6 +1,7 @@
 package http
 
 import (
+	"SongsLibrary/internal/db/models"
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	"github.com/gin-gonic/gin"
@@ -62,4 +63,21 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"deleteSong": deleteSong})
+}
+
+func (h *Handler) UpdateSong(c *gin.Context) {
+	var fieldsToUpdate models.Song
+	if err := c.ShouldBindJSON(&fieldsToUpdate); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updateSong, err := h.useCase.UpdateSong(&fieldsToUpdate)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Updated Song": updateSong})
 }

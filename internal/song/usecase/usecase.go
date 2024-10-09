@@ -33,3 +33,12 @@ func (suc *SongUseCase) DeleteSong(id uuid.UUID) (*models.Song, error) {
 
 	return deletedSong, nil
 }
+
+func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
+	updatedSong, err := suc.songRepo.UpdateSong(fieldsToUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedSong, nil
+}
