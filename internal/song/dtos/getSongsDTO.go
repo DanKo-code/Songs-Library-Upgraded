@@ -1,5 +1,9 @@
 package dtos
 
+import (
+	"SongsLibrary/internal/song/constants"
+)
+
 type GetSongsDTO struct {
 	Name        string `form:"name" binding:"omitempty,max=100"`
 	GroupName   string `form:"group_name" binding:"omitempty,max=100"`
@@ -8,4 +12,13 @@ type GetSongsDTO struct {
 	Link        string `form:"link" binding:"omitempty,url"`
 	Page        int    `form:"page" binding:"omitempty,min=1"`
 	PageSize    int    `form:"page_size" binding:"omitempty,min=1,max=100"`
+}
+
+func (dto *GetSongsDTO) SetDefaults() {
+	if dto.Page == 0 {
+		dto.Page = constants.DefaultSongsPage
+	}
+	if dto.PageSize == 0 {
+		dto.PageSize = constants.DefaultSongsPageSize
+	}
 }

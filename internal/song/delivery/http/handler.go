@@ -44,12 +44,7 @@ func (h *Handler) GetSongs(c *gin.Context) {
 		return
 	}
 
-	if gsdto.Page == 0 {
-		gsdto.Page = song.DefaultPage
-	}
-	if gsdto.PageSize == 0 {
-		gsdto.PageSize = song.DefaultPageSize
-	}
+	gsdto.SetDefaults()
 
 	songs, err := h.useCase.GetSongs(&gsdto)
 	if err != nil {
@@ -129,12 +124,12 @@ func (h *Handler) GetSongLyrics(c *gin.Context) {
 		return
 	}
 	gsldtp.Id = convertedId
-	if gsldtp.Page == 0 {
+	/*if gsldtp.Page == 0 {
 		gsldtp.Page = song.DefaultLyricsPage
 	}
 	if gsldtp.PageSize == 0 {
 		gsldtp.PageSize = song.DefaultLyricsPageSize
-	}
+	}*/
 
 	lyrics, err := h.useCase.GetSongLyrics(&gsldtp)
 	if err != nil {
