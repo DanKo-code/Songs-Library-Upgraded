@@ -48,7 +48,6 @@ func (h *Handler) GetSongs(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
-
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
 	gsdto.SetDefaults()
@@ -171,14 +170,41 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 
 func (h *Handler) CreateSong(c *gin.Context) {
 	var createSongDTO dtos.CreateSongDTO
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered CreateSongs Hanlder with parameters: %+v", createSongDTO))
+
 	if err := c.ShouldBindJSON(&createSongDTO); err != nil {
-		log.Println(err)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully binded song parameters: %+v", createSongDTO))
+
+	err := h.validate.Struct(createSongDTO)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
+		return
+	}
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
 	createSong, err := h.useCase.CreateSong(createSongDTO.Group, createSongDTO.Song)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		if err.Error() == song.ErrorGetSongIP.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+			return
+		}
+
+		if err.Error() == song.ErrorGetSongLyrics.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongLyrics.Error()})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

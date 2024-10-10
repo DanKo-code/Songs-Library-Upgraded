@@ -70,9 +70,12 @@ func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, e
 
 func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered CreateSongs UseCase with parameters: group:%s, song:%s", group, song))
+
 	//send req for enrichment
 	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(group, song)
 	if err != nil {
+
 		return nil, err
 	}
 
@@ -85,6 +88,8 @@ func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting CreateSongs UseCase with created song: %+v", createdSong))
 
 	return createdSong, nil
 }

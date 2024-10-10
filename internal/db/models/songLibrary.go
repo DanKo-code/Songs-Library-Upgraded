@@ -11,5 +11,5 @@ type Song struct {
 	GroupName   string    `gorm:"size:255"`
 	ReleaseDate time.Time
 	Text        string `gorm:"type:text"`
-	Link        string `gorm:"size:255"`
+	Link        string `gorm:"type:text"`
 }

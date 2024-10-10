@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	"SongsLibrary/internal/song"
+	logrusCustom "SongsLibrary/pkg/logger"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
@@ -45,37 +47,53 @@ type Track struct {
 	Link        string `json:"track_share_url"`
 }
 
-func (mmuc *MusixMatchUseCase) GetSongIP(groupName, song string) (string, string, string, error) {
+func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, string, string, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongIP UseCase with parameters: groupName:%s, song:%s", groupName, songName))
 
 	groupNameEscaped := url.QueryEscape(groupName)
-	songEscaped := url.QueryEscape(song)
+	songEscaped := url.QueryEscape(songName)
 
 	musixMatchUrl := fmt.Sprintf(mmuc.baseURL+mmuc.getSongIPPath, groupNameEscaped, songEscaped, mmuc.apiKey)
 
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP URL: musixMatchUrl:%s", musixMatchUrl))
+
 	req, err := http.NewRequest("GET", musixMatchUrl, nil)
 	if err != nil {
-		return "", "", "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", "", "", song.ErrorGetSongIP
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP REQ: %+v", req))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", "", "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", "", "", song.ErrorGetSongIP
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongIP RES: %+v", resp))
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", "", "", song.ErrorGetSongIP
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", "", "", fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
+
+		return "", "", "", song.ErrorGetSongIP
 	}
 
 	var getSongIPResult GetSongIPResult
 	if err := json.Unmarshal(body, &getSongIPResult); err != nil {
-		return "", "", "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", "", "", song.ErrorGetSongIP
 	}
 
 	if len(getSongIPResult.Message.Body.TrackList) != 0 {
@@ -83,10 +101,11 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, song string) (string, string
 		link := getSongIPResult.Message.Body.TrackList[0].Track.Link
 		releaseDate := getSongIPResult.Message.Body.TrackList[0].Track.ReleaseDate
 
+		logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongIP UseCase with song data: ip:%s, link:%s, releaseDate:%s", strconv.Itoa(songIp), link, releaseDate))
 		return strconv.Itoa(songIp), link, releaseDate, nil
 	}
 
-	return "", "", "", errors.New("the song was not found")
+	return "", "", "", song.ErrorGetSongIP
 }
 
 type GetSongLyricsResult struct {
@@ -101,32 +120,48 @@ type GetSongLyricsResult struct {
 
 func (mmuc *MusixMatchUseCase) GetLyrics(ip string) (string, error) {
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetLyrics UseCase with parameter: ip:%s", ip))
+
 	musixMatchUrl := fmt.Sprintf(mmuc.baseURL+mmuc.getLyricsPath, ip, mmuc.apiKey)
+
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongLyrics URL: musixMatchUrl:%s", musixMatchUrl))
 
 	req, err := http.NewRequest("GET", musixMatchUrl, nil)
 	if err != nil {
-		return "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", song.ErrorGetSongLyrics
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongLyrics REQ: %+v", req))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", song.ErrorGetSongIP
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongIP RES: %+v", resp))
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return "", song.ErrorGetSongLyrics
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
+
+		return "", song.ErrorGetSongLyrics
 	}
 
 	var getSongLyricsResult GetSongLyricsResult
 	if err := json.Unmarshal(body, &getSongLyricsResult); err != nil {
-		return "", err
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
+
+		return "", song.ErrorGetSongLyrics
 	}
 
 	lyricsBodyBorder := "\n...\n\n******* This Lyrics is NOT for Commercial use *******"
@@ -134,8 +169,7 @@ func (mmuc *MusixMatchUseCase) GetLyrics(ip string) (string, error) {
 
 	lyricsBody = strings.Split(lyricsBody, lyricsBodyBorder)[0]
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetLyrics UseCase with song lyrics: %+v", lyricsBody))
+
 	return lyricsBody, nil
 }
-
-/*func (mmuc *MusixMatchUseCase)
- */
