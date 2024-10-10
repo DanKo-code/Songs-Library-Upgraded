@@ -6,4 +6,6 @@ const (
 
 	DefaultLyricsPage     = 1
 	DefaultLyricsPageSize = 2
+
+	DbUniqueConstrintErr = "23505"
 )

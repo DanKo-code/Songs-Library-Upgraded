@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -49,12 +50,10 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
 	gsdto.SetDefaults()
-
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))
 
 	songs, err := h.useCase.GetSongs(&gsdto)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		if err.Error() == song.SongsNotFound.Error() {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
@@ -85,7 +84,6 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 
 	deleteSong, err := h.useCase.DeleteSong(convertedId)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		if err.Error() == song.SongsNotFound.Error() {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
@@ -152,7 +150,6 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 
 	updateSong, err := h.useCase.UpdateSong(&songToUpdate)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		if err.Error() == song.SongsNotFound.Error() {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
@@ -188,17 +185,21 @@ func (h *Handler) CreateSong(c *gin.Context) {
 	}
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
-	createSong, err := h.useCase.CreateSong(createSongDTO.Group, createSongDTO.Song)
+	createSong, err := h.useCase.CreateSong(strings.ToLower(createSongDTO.Group), strings.ToLower(createSongDTO.Song))
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		if err.Error() == song.ErrorGetSongIP.Error() {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+		if err.Error() == song.ErrorGetSongData.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongData.Error()})
 			return
 		}
 
 		if err.Error() == song.ErrorGetSongLyrics.Error() {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongLyrics.Error()})
+			return
+		}
+
+		if err.Error() == song.SongAlreadyExists.Error() {
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": song.SongAlreadyExists.Error()})
 			return
 		}
 
@@ -238,15 +239,14 @@ func (h *Handler) GetSongLyrics(c *gin.Context) {
 
 	lyrics, err := h.useCase.GetSongLyrics(&gsldtp)
 	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		if err.Error() == song.ErrorGetSongIP.Error() {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+		if err.Error() == song.ErrorGetSongData.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongData.Error()})
 			return
 		}
 
 		if err.Error() == song.ErrorGetSongLyrics.Error() {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongData.Error()})
 			return
 		}
 

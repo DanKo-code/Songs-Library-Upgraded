@@ -62,7 +62,7 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, st
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		return "", "", "", song.ErrorGetSongIP
+		return "", "", "", song.ErrorGetSongData
 	}
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP REQ: %+v", req))
 
@@ -71,7 +71,7 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, st
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		return "", "", "", song.ErrorGetSongIP
+		return "", "", "", song.ErrorGetSongData
 	}
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongIP RES: %+v", resp))
 	defer resp.Body.Close()
@@ -80,20 +80,20 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, st
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		return "", "", "", song.ErrorGetSongIP
+		return "", "", "", song.ErrorGetSongData
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
 
-		return "", "", "", song.ErrorGetSongIP
+		return "", "", "", song.ErrorGetSongData
 	}
 
 	var getSongIPResult GetSongIPResult
 	if err := json.Unmarshal(body, &getSongIPResult); err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		return "", "", "", song.ErrorGetSongIP
+		return "", "", "", song.ErrorGetSongData
 	}
 
 	if len(getSongIPResult.Message.Body.TrackList) != 0 {
@@ -105,7 +105,7 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, st
 		return strconv.Itoa(songIp), link, releaseDate, nil
 	}
 
-	return "", "", "", song.ErrorGetSongIP
+	return "", "", "", song.ErrorGetSongData
 }
 
 type GetSongLyricsResult struct {
@@ -139,7 +139,7 @@ func (mmuc *MusixMatchUseCase) GetLyrics(ip string) (string, error) {
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		return "", song.ErrorGetSongIP
+		return "", song.ErrorGetSongData
 	}
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongIP RES: %+v", resp))
 	defer resp.Body.Close()
