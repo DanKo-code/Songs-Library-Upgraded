@@ -75,7 +75,6 @@ func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
 	//send req for enrichment
 	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(group, song)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -95,15 +94,23 @@ func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
 }
 
 func (suc *SongUseCase) GetSongLyrics(gsldto *dtos.GetSongLyricsDTO) ([]string, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongLyrics UseCase with parameters: %+v", gsldto))
+
 	existingSong, err := suc.songRepo.GetSong(gsldto.Id)
 	if err != nil {
 		return nil, err
 	}
 
+	if existingSong.Text == "" {
+		return nil, song.ErrorGetSongLyrics
+	}
+
 	verses := strings.Split(existingSong.Text, "\n\n")
 
-	offset := (gsldto.Page - 1) * gsldto.PageSize
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Exiting GetSongLyrics UseCase with song lyrics verses: %+v", verses))
 
+	offset := (gsldto.Page - 1) * gsldto.PageSize
 	if offset > len(verses) {
 		return []string{}, nil
 	}
@@ -112,6 +119,8 @@ func (suc *SongUseCase) GetSongLyrics(gsldto *dtos.GetSongLyricsDTO) ([]string, 
 	if end > len(verses) {
 		end = len(verses)
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongLyrics UseCase with song lyrics verses: %+v", verses[offset:end]))
 
 	return verses[offset:end], nil
 }

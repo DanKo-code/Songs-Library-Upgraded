@@ -10,7 +10,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"log"
 	"net/http"
 	"time"
 )
@@ -38,7 +37,6 @@ func (h *Handler) GetSongs(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
-
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully binded song parameters: %+v", gsdto))
 
 	err := h.validate.Struct(gsdto)
@@ -63,7 +61,7 @@ func (h *Handler) GetSongs(c *gin.Context) {
 			return
 		}
 
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": song.SongsNotFound.Error()})
 		return
 	}
 
@@ -212,31 +210,47 @@ func (h *Handler) CreateSong(c *gin.Context) {
 }
 
 func (h *Handler) GetSongLyrics(c *gin.Context) {
+
+	var gsldtp dtos.GetSongLyricsDTO
 	id := c.Param("id")
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongLyrics Hanlder with parameter: id: , %s", id))
 
 	convertedId, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Song ID format"})
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidSongIdFormat.Error()})
 		return
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully converted songId to uuid format: %s", convertedId.String()))
 
-	var gsldtp dtos.GetSongLyricsDTO
 	if err := c.ShouldBindQuery(&gsldtp); err != nil {
-		log.Println(err)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
 	gsldtp.Id = convertedId
-	/*if gsldtp.Page == 0 {
-		gsldtp.Page = song.DefaultLyricsPage
-	}
-	if gsldtp.PageSize == 0 {
-		gsldtp.PageSize = song.DefaultLyricsPageSize
-	}*/
+
+	gsldtp.SetDefaults()
+
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsldtp))
 
 	lyrics, err := h.useCase.GetSongLyrics(&gsldtp)
 	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		if err.Error() == song.ErrorGetSongIP.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+			return
+		}
+
+		if err.Error() == song.ErrorGetSongLyrics.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.ErrorGetSongIP.Error()})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": song.SongsNotFound.Error()})
 		return
 	}
 

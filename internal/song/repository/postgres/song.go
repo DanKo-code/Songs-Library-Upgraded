@@ -124,7 +124,7 @@ func (sr *SongRepository) CreateSong(group, song, lyrics, link, releaseDate stri
 	}
 
 	var songToCreate *models.Song = &models.Song{ID: uuid.New(), Name: song, GroupName: group, Text: lyrics, Link: link, ReleaseDate: releaseDateCasted}
-	if err := sr.db.Create(&songToCreate).Error; err != nil {
+	if err := sr.db.Debug().Create(&songToCreate).Error; err != nil {
 		return nil, err
 	}
 
@@ -132,10 +132,20 @@ func (sr *SongRepository) CreateSong(group, song, lyrics, link, releaseDate stri
 }
 
 func (sr *SongRepository) GetSong(id uuid.UUID) (*models.Song, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSong Repository with parameter: id:%s", id.String()))
+
 	var songToGet models.Song
-	if err := sr.db.First(&songToGet, "id = ?", id).Error; err != nil {
+	if err := sr.db.Debug().First(&songToGet, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+
+			return nil, song.SongsNotFound
+		}
+
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSong Repository with songs: %+v", songToGet))
 
 	return &songToGet, nil
 }
