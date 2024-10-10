@@ -2,9 +2,13 @@ package postgres
 
 import (
 	"SongsLibrary/internal/db/models"
+	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
+	logrusCustom "SongsLibrary/pkg/logger"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"time"
 )
@@ -18,6 +22,9 @@ func NewSongRepository(db *gorm.DB) *SongRepository {
 }
 
 func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongs Repository with parameters: %+v", gsdto))
+
 	var songs []models.Song
 
 	query := sr.db.Model(&models.Song{})
@@ -41,9 +48,19 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 	offset := (gsdto.Page - 1) * gsdto.PageSize
 	query = query.Offset(offset).Limit(gsdto.PageSize)
 
+	query = query.Debug()
+
 	if err := query.Find(&songs).Error; err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
 		return nil, err
 	}
+
+	if len(songs) == 0 {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
+	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongs Repository with songs: %+v", songs))
 
 	return songs, nil
 }

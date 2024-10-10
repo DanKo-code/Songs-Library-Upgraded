@@ -4,9 +4,12 @@ import (
 	"SongsLibrary/internal/db/models"
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
+	logrusCustom "SongsLibrary/pkg/logger"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 )
@@ -26,30 +29,41 @@ func NewHandler(useCase song.UseCase, validate *validator.Validate) *Handler {
 func (h *Handler) GetSongs(c *gin.Context) {
 	var gsdto dtos.GetSongsDTO
 
-	if err := c.ShouldBindQuery(&gsdto); err != nil {
-		log.Println(err)
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongs Hanlder with parameters: %+v", gsdto))
 
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindQuery(&gsdto); err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
+
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully binded song parameters: %+v", gsdto))
 
 	err := h.validate.Struct(gsdto)
 	if err != nil {
-		log.Println(err)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		c.JSON(400, gin.H{
-			"error":   "Invalid input data",
-			"details": err.Error(),
-		})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
 		return
 	}
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
+
 	gsdto.SetDefaults()
+
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))
 
 	songs, err := h.useCase.GetSongs(&gsdto)
 	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(songs) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
 		return
 	}
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"SongsLibrary/internal/server"
+	logrus "SongsLibrary/pkg/logger"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -12,6 +13,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	logrus.InitLogger()
 
 	app := server.NewApp()
 

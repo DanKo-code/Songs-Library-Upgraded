@@ -4,7 +4,10 @@ import (
 	"SongsLibrary/internal/db/models"
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
+	logrusCustom "SongsLibrary/pkg/logger"
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -19,10 +22,16 @@ func NewSongUseCase(songRepo song.Repository, musixMatchUseCase song.MusixmatchU
 
 func (suc *SongUseCase) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongs UseCase with parameters: %+v", gsdto))
+
 	songs, err := suc.songRepo.GetSongs(gsdto)
 	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongs UseCase with songs: %+v", songs))
 
 	return songs, nil
 }

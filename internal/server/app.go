@@ -7,10 +7,12 @@ import (
 	songpostgres "SongsLibrary/internal/song/repository/postgres"
 	songusecase "SongsLibrary/internal/song/usecase"
 	"SongsLibrary/internal/validators"
+	logrusCustom "SongsLibrary/pkg/logger"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -61,7 +63,7 @@ func (a *App) Run(port string) error {
 
 	go func() {
 		if err := a.httpServer.ListenAndServe(); err != nil {
-			log.Fatalf("Failed to listen and serve: %+v", err)
+			logrusCustom.Logger.Fatalf("Failed to listen and serve: %+v", err)
 		}
 	}()
 
@@ -69,6 +71,7 @@ func (a *App) Run(port string) error {
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
 
 	<-quit
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Gracefully shutting down server...")
 
 	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
