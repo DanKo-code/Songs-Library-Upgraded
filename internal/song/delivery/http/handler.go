@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Handler struct {
@@ -102,16 +103,66 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 }
 
 func (h *Handler) UpdateSong(c *gin.Context) {
-	var fieldsToUpdate models.Song
-	if err := c.ShouldBindJSON(&fieldsToUpdate); err != nil {
-		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	var fieldsToUpdate dtos.UpdateSongsDTO
+	id := c.Param("id")
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSong Hanlder with parameter: id: , %+v", fieldsToUpdate))
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidSongIdFormat.Error()})
 		return
 	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully converted songId to uuid format: %s", convertedId.String()))
 
-	updateSong, err := h.useCase.UpdateSong(&fieldsToUpdate)
+	if err := c.ShouldBindJSON(&fieldsToUpdate); err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
+		return
+	}
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully binded song parameters: %+v", fieldsToUpdate))
+
+	err = h.validate.Struct(fieldsToUpdate)
 	if err != nil {
-		log.Println(err)
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
+		return
+	}
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
+
+	var releaseDateCasted time.Time
+	if fieldsToUpdate.ReleaseDate != "" {
+		releaseDateCasted, err = time.Parse(time.RFC3339, fieldsToUpdate.ReleaseDate)
+		if err != nil {
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
+			return
+		}
+	}
+
+	var songToUpdate models.Song = models.Song{
+		ID:          convertedId,
+		Name:        fieldsToUpdate.Name,
+		GroupName:   fieldsToUpdate.GroupName,
+		Text:        fieldsToUpdate.Text,
+		Link:        fieldsToUpdate.Link,
+		ReleaseDate: releaseDateCasted}
+
+	updateSong, err := h.useCase.UpdateSong(&songToUpdate)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		if err.Error() == song.SongsNotFound.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

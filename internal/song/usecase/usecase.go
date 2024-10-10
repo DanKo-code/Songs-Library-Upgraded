@@ -53,10 +53,17 @@ func (suc *SongUseCase) DeleteSong(id uuid.UUID) (*models.Song, error) {
 }
 
 func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSongs UseCase with parameters: %+v", fieldsToUpdate))
+
 	updatedSong, err := suc.songRepo.UpdateSong(fieldsToUpdate)
 	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting UpdateSongs UseCase with updated song: %+v", updatedSong))
 
 	return updatedSong, nil
 }

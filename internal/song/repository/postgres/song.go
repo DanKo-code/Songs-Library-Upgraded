@@ -89,11 +89,32 @@ func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
 }
 
 func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
-	if err := sr.db.Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate).Error; err != nil {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSong Repository with parameter: %+v", fieldsToUpdate))
+
+	result := sr.db.Debug().Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, song.SongsNotFound
+	}
+
+	var updatedSong models.Song
+	if err := sr.db.Debug().First(&updatedSong, "id = ?", fieldsToUpdate.ID).Error; err != nil {
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+
+			return nil, song.SongsNotFound
+		}
+
 		return nil, err
 	}
 
-	return fieldsToUpdate, nil
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting UpdateSongs Repository with updated song: %+v", updatedSong))
+
+	return &updatedSong, nil
 }
 
 func (sr *SongRepository) CreateSong(group, song, lyrics, link, releaseDate string) (*models.Song, error) {

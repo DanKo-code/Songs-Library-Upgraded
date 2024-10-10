@@ -13,7 +13,7 @@ func RegisterHTTPEndpoints(router *gin.Engine, uc song.UseCase, validator *valid
 	{
 		authEndPoints.GET("/songs", h.GetSongs)
 		authEndPoints.DELETE("/songs/:id", h.DeleteSong)
-		authEndPoints.PUT("/songs", h.UpdateSong)
+		authEndPoints.PUT("/songs/:id", h.UpdateSong)
 		authEndPoints.POST("/songs", h.CreateSong)
 		authEndPoints.GET("/songs/:id/lyrics", h.GetSongLyrics)
 	}
