@@ -28,7 +28,7 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 	if gsdto.GroupName != "" {
 		query = query.Where("group_name LIKE ?", "%"+gsdto.GroupName+"%")
 	}
-	if !gsdto.ReleaseDate.IsZero() {
+	if gsdto.ReleaseDate != "" {
 		query = query.Where("release_date = ?", gsdto.ReleaseDate)
 	}
 	if gsdto.Text != "" {
@@ -85,4 +85,13 @@ func (sr *SongRepository) CreateSong(group, song, lyrics, link, releaseDate stri
 	}
 
 	return songToCreate, nil
+}
+
+func (sr *SongRepository) GetSong(id uuid.UUID) (*models.Song, error) {
+	var songToGet models.Song
+	if err := sr.db.First(&songToGet, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return &songToGet, nil
 }

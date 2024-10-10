@@ -11,4 +11,5 @@ type Repository interface {
 	DeleteSong(id uuid.UUID) (*models.Song, error)
 	UpdateSong(*models.Song) (*models.Song, error)
 	CreateSong(group, song, lyrics, link, releaseDate string) (*models.Song, error)
+	GetSong(id uuid.UUID) (*models.Song, error)
 }

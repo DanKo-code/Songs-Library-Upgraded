@@ -1,18 +1,11 @@
 package dtos
 
-import "time"
-
 type GetSongsDTO struct {
-	Name        string    `form:"name"`
-	GroupName   string    `form:"group_name"`
-	ReleaseDate time.Time `form:"release_date"`
-	Text        string    `form:"text"`
-	Link        string    `form:"link"`
-	Page        int       `form:"page"`
-	PageSize    int       `form:"page_size"`
-}
-
-type CreateSongDTO struct {
-	Group string `form:"group"`
-	Song  string `form:"song"`
+	Name        string `form:"name" binding:"omitempty,max=100"`
+	GroupName   string `form:"group_name" binding:"omitempty,max=100"`
+	ReleaseDate string `form:"release_date" validate:"DateValidation"`
+	Text        string `form:"text" binding:"omitempty,max=10000"`
+	Link        string `form:"link" binding:"omitempty,url"`
+	Page        int    `form:"page" binding:"omitempty,min=1"`
+	PageSize    int    `form:"page_size" binding:"omitempty,min=1,max=100"`
 }

@@ -5,6 +5,7 @@ import (
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	"github.com/google/uuid"
+	"strings"
 )
 
 type SongUseCase struct {
@@ -63,4 +64,26 @@ func (suc *SongUseCase) CreateSong(group, song string) (*models.Song, error) {
 	}
 
 	return createdSong, nil
+}
+
+func (suc *SongUseCase) GetSongLyrics(gsldto *dtos.GetSongLyricsDTO) ([]string, error) {
+	existingSong, err := suc.songRepo.GetSong(gsldto.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	verses := strings.Split(existingSong.Text, "\n\n")
+
+	offset := (gsldto.Page - 1) * gsldto.PageSize
+
+	if offset > len(verses) {
+		return []string{}, nil
+	}
+
+	end := offset + gsldto.PageSize
+	if end > len(verses) {
+		end = len(verses)
+	}
+
+	return verses[offset:end], nil
 }

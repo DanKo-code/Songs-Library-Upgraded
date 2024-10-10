@@ -5,18 +5,21 @@ import (
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
 )
 
 type Handler struct {
-	useCase song.UseCase
+	useCase  song.UseCase
+	validate *validator.Validate
 }
 
-func NewHandler(useCase song.UseCase) *Handler {
+func NewHandler(useCase song.UseCase, validate *validator.Validate) *Handler {
 	return &Handler{
-		useCase: useCase,
+		useCase:  useCase,
+		validate: validate,
 	}
 }
 
@@ -27,6 +30,17 @@ func (h *Handler) GetSongs(c *gin.Context) {
 		log.Println(err)
 
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.validate.Struct(gsdto)
+	if err != nil {
+		log.Println(err)
+
+		c.JSON(400, gin.H{
+			"error":   "Invalid input data",
+			"details": err.Error(),
+		})
 		return
 	}
 
@@ -96,4 +110,36 @@ func (h *Handler) CreateSong(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"Created Song": createSong})
+}
+
+func (h *Handler) GetSongLyrics(c *gin.Context) {
+	id := c.Param("id")
+
+	convertedId, err := uuid.Parse(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Song ID format"})
+		return
+	}
+
+	var gsldtp dtos.GetSongLyricsDTO
+	if err := c.ShouldBindQuery(&gsldtp); err != nil {
+		log.Println(err)
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	gsldtp.Id = convertedId
+	if gsldtp.Page == 0 {
+		gsldtp.Page = song.DefaultLyricsPage
+	}
+	if gsldtp.PageSize == 0 {
+		gsldtp.PageSize = song.DefaultLyricsPageSize
+	}
+
+	lyrics, err := h.useCase.GetSongLyrics(&gsldtp)
+	if err != nil {
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"lyrics": lyrics})
 }

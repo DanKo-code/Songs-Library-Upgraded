@@ -6,9 +6,11 @@ import (
 	songhttp "SongsLibrary/internal/song/delivery/http"
 	songpostgres "SongsLibrary/internal/song/repository/postgres"
 	songusecase "SongsLibrary/internal/song/usecase"
+	"SongsLibrary/internal/validators"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -44,7 +46,13 @@ func NewApp() *App {
 func (a *App) Run(port string) error {
 	router := gin.Default()
 
-	songhttp.RegisterHTTPEndpoints(router, a.songUC)
+	validate := validator.New()
+	err := validate.RegisterValidation("DateValidation", validators.DateValidation)
+	if err != nil {
+		return nil
+	}
+
+	songhttp.RegisterHTTPEndpoints(router, a.songUC, validate)
 
 	a.httpServer = &http.Server{
 		Addr:    ":" + port,
