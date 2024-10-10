@@ -37,10 +37,17 @@ func (suc *SongUseCase) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error)
 }
 
 func (suc *SongUseCase) DeleteSong(id uuid.UUID) (*models.Song, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong UseCase with parameter: %+v", id.String()))
+
 	deletedSong, err := suc.songRepo.DeleteSong(id)
 	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting DeleteSongs UseCase with deleted song: %+v", deletedSong))
 
 	return deletedSong, nil
 }

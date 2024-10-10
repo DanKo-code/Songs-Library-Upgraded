@@ -51,13 +51,11 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 	query = query.Debug()
 
 	if err := query.Find(&songs).Error; err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
 		return nil, err
 	}
 
 	if len(songs) == 0 {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
+		return nil, song.SongsNotFound
 	}
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongs Repository with songs: %+v", songs))
@@ -66,18 +64,26 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 }
 
 func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong Repository with parameter: %s", id.String()))
+
 	var songToDelete models.Song
 
-	if err := sr.db.First(&songToDelete, "id = ?", id).Error; err != nil {
+	if err := sr.db.Debug().First(&songToDelete, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+
+			return nil, song.SongsNotFound
 		}
+
 		return nil, err
 	}
 
-	if err := sr.db.Delete(&models.Song{}, id).Error; err != nil {
+	if err := sr.db.Debug().Delete(&models.Song{}, id).Error; err != nil {
+
 		return nil, err
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting DeleteSongs Repository with deleted song: %+v", songToDelete))
 
 	return &songToDelete, nil
 }

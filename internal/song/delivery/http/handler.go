@@ -58,12 +58,12 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+		if err.Error() == song.SongsNotFound.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
+			return
+		}
 
-	if len(songs) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -73,15 +73,28 @@ func (h *Handler) GetSongs(c *gin.Context) {
 func (h *Handler) DeleteSong(c *gin.Context) {
 	id := c.Param("id")
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong Hanlder with parameter: %s", id))
+
 	convertedId, err := uuid.Parse(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Song ID format"})
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidSongIdFormat.Error()})
 		return
 	}
 
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully converted songId to uuid format: %s", convertedId.String()))
+
 	deleteSong, err := h.useCase.DeleteSong(convertedId)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		if err.Error() == song.SongsNotFound.Error() {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
+			return
+		}
+
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
