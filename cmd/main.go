@@ -2,20 +2,25 @@ package main
 
 import (
 	"SongsLibrary/internal/server"
+	logrusCustom "SongsLibrary/pkg/logger"
 	"github.com/joho/godotenv"
-	"log"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
 func main() {
+	logrusCustom.InitLogger()
+
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		logrusCustom.Logger.Fatalf("Error loading .env file")
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully loaded environment variables")
 
 	app := server.NewApp()
 
 	if err := app.Run(os.Getenv("APP_PORT")); err != nil {
-		log.Fatalf("%s", err.Error())
+		logrusCustom.Logger.Fatalf("Error when running server: %s", err.Error())
 	}
 }

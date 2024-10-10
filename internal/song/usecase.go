@@ -11,6 +11,7 @@ type UseCase interface {
 	DeleteSong(id uuid.UUID) (*models.Song, error)
 	UpdateSong(*models.Song) (*models.Song, error)
 	CreateSong(group, song string) (*models.Song, error)
+	GetSongLyrics(dto *dtos.GetSongLyricsDTO) ([]string, error)
 }
 
 type MusixmatchUseCase interface {

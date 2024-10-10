@@ -6,13 +6,16 @@ import (
 	songhttp "SongsLibrary/internal/song/delivery/http"
 	songpostgres "SongsLibrary/internal/song/repository/postgres"
 	songusecase "SongsLibrary/internal/song/usecase"
+	"SongsLibrary/internal/validators"
+	logrusCustom "SongsLibrary/pkg/logger"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,6 +29,9 @@ type App struct {
 }
 
 func NewApp() *App {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered NewApp function"))
+
 	db := initDB()
 
 	songRepo := songpostgres.NewSongRepository(db)
@@ -44,7 +50,15 @@ func NewApp() *App {
 func (a *App) Run(port string) error {
 	router := gin.Default()
 
-	songhttp.RegisterHTTPEndpoints(router, a.songUC)
+	validate := validator.New()
+	err := validate.RegisterValidation("DateValidation", validators.DateValidation)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		return err
+	}
+
+	songhttp.RegisterHTTPEndpoints(router, a.songUC, validate)
 
 	a.httpServer = &http.Server{
 		Addr:    ":" + port,
@@ -53,7 +67,7 @@ func (a *App) Run(port string) error {
 
 	go func() {
 		if err := a.httpServer.ListenAndServe(); err != nil {
-			log.Fatalf("Failed to listen and serve: %+v", err)
+			logrusCustom.Logger.Fatalf("Failed to listen and serve: %+v", err)
 		}
 	}()
 
@@ -61,6 +75,7 @@ func (a *App) Run(port string) error {
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
 
 	<-quit
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Gracefully shutting down server...")
 
 	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
@@ -69,6 +84,9 @@ func (a *App) Run(port string) error {
 }
 
 func initDB() *gorm.DB {
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Entered initDB function")
+
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
@@ -79,20 +97,29 @@ func initDB() *gorm.DB {
 		os.Getenv("DB_SLLMODE"),
 	)
 
+	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Loaded dsn: %s", dsn))
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Connecting to db")
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
 	})
-
 	if err != nil {
-		panic("failed to connect database")
+		logrusCustom.Logger.Fatalf("Failed to connect database")
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully connected to db")
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Starting migrating db")
 
 	err = db.AutoMigrate(&models.Song{})
 	if err != nil {
-		log.Fatal("failed to migrate database")
+		logrusCustom.Logger.Fatalf("Failed migrate db")
 	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully migrated to db")
 
 	return db
 }
