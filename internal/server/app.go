@@ -1,6 +1,7 @@
 package server
 
 import (
+	_ "SongsLibrary/docs"
 	"SongsLibrary/internal/db/models"
 	"SongsLibrary/internal/song"
 	songhttp "SongsLibrary/internal/song/delivery/http"
@@ -13,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -59,6 +62,8 @@ func (a *App) Run(port string) error {
 	}
 
 	songhttp.RegisterHTTPEndpoints(router, a.songUC, validate)
+
+	router.GET(os.Getenv("SWAGGER_PATH"), ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	a.httpServer = &http.Server{
 		Addr:    ":" + port,

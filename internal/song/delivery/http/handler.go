@@ -27,6 +27,23 @@ func NewHandler(useCase song.UseCase, validate *validator.Validate) *Handler {
 	}
 }
 
+// GetSongs
+// @Summary Retrieve a list of songs
+// @Description Fetch a list of songs from the library with filtering options such as name, group name, release date, text, link, and pagination. Each song can be filtered based on the available query parameters.
+// @Tags Songs
+// @Produce  json
+// @Param name query string false "Name of the song" maxlength(100)
+// @Param group_name query string false "Name of the group" maxlength(100)
+// @Param release_date query string false "Release date of the song" format(date)
+// @Param text query string false "Lyrics of the song" maxlength(10000)
+// @Param link query string false "Link to the song" format(url)
+// @Param page query int false "Page number for pagination" minimum(1)
+// @Param page_size query int false "Number of songs per page" minimum(1) maximum(100)
+// @Success 200 {array} models.Song "List of songs"
+// @Failure 400 {object} string "Invalid input data"
+// @Failure 404 {object} string "Songs not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/songs [get]
 func (h *Handler) GetSongs(c *gin.Context) {
 	var gsdto dtos.GetSongsDTO
 
@@ -67,6 +84,17 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"songs": songs})
 }
 
+// DeleteSong
+// @Summary Delete a song by its ID
+// @Description Remove a song from the library using its UUID. The song ID should be in UUID format.
+// @Tags Songs
+// @Produce json
+// @Param id path string true "UUID of the song to delete" format(uuid)
+// @Success 200 {object} models.Song "Deleted song details"
+// @Failure 400 {object} string "Invalid song ID format"
+// @Failure 404 {object} string "Song not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/songs/{id} [delete]
 func (h *Handler) DeleteSong(c *gin.Context) {
 	id := c.Param("id")
 
@@ -97,6 +125,18 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"deleteSong": deleteSong})
 }
 
+// UpdateSong
+// @Summary Update a song by its ID
+// @Description Update the details of a song in the library using its UUID. The song ID should be in UUID format. The request body should contain the fields to be updated.
+// @Tags Songs
+// @Produce json
+// @Param id path string true "UUID of the song to update" format(uuid)
+// @Param fieldsToUpdate body dtos.UpdateSongsDTO true "Fields to update"
+// @Success 200 {object} models.Song "Updated song details"
+// @Failure 400 {object} string "Invalid input data"
+// @Failure 404 {object} string "Song not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/songs/{id} [put]
 func (h *Handler) UpdateSong(c *gin.Context) {
 
 	var fieldsToUpdate dtos.UpdateSongsDTO
@@ -163,6 +203,18 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Updated Song": updateSong})
 }
 
+// CreateSong
+// @Summary Create a new song
+// @Description Create a new song in the library by providing song details in the request body. The group and song name will be converted to lowercase before saving.
+// @Tags Songs
+// @Produce json
+// @Param createSongDTO body dtos.CreateSongDTO true "Details of the song to create"
+// @Success 200 {object} models.Song "Created song details"
+// @Failure 400 {object} string "Invalid input data"
+// @Failure 404 {object} string "Data not found"
+// @Failure 409 {object} string "Song already exists"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/songs [post]
 func (h *Handler) CreateSong(c *gin.Context) {
 	var createSongDTO dtos.CreateSongDTO
 
@@ -210,6 +262,18 @@ func (h *Handler) CreateSong(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Created Song": createSong})
 }
 
+// GetSongLyrics
+// @Summary Retrieve lyrics of a song
+// @Description Fetch the lyrics of a specific song identified by its ID. Optional query parameters can be used to filter the results further.
+// @Tags Songs
+// @Produce json
+// @Param id path string true "ID of the song"
+// @Param getSongLyricsDTO body dtos.GetSongLyricsDTO false "Pagination parameters"
+// @Success 200 {object} string "Lyrics of the song"
+// @Failure 400 {object} string "Invalid input data"
+// @Failure 404 {object} string "Song not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/songs/{id}/lyrics [get]
 func (h *Handler) GetSongLyrics(c *gin.Context) {
 
 	var gsldtp dtos.GetSongLyricsDTO

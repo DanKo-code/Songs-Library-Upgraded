@@ -1,0 +1,269 @@
+definitions:
+  dtos.CreateSongDTO:
+    properties:
+      group:
+        maxLength: 100
+        type: string
+      song:
+        maxLength: 100
+        type: string
+    type: object
+  dtos.GetSongLyricsDTO:
+    properties:
+      id:
+        type: string
+      page:
+        minimum: 1
+        type: integer
+      page_size:
+        maximum: 100
+        minimum: 1
+        type: integer
+    type: object
+  dtos.UpdateSongsDTO:
+    properties:
+      group_name:
+        maxLength: 100
+        type: string
+      link:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      release_date:
+        type: string
+      text:
+        maxLength: 10000
+        type: string
+    type: object
+  models.Song:
+    properties:
+      groupName:
+        type: string
+      id:
+        type: string
+      link:
+        type: string
+      name:
+        type: string
+      releaseDate:
+        type: string
+      text:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/songs:
+    get:
+      description: Fetch a list of songs from the library with filtering options such
+        as name, group name, release date, text, link, and pagination. Each song can
+        be filtered based on the available query parameters.
+      parameters:
+      - description: Name of the song
+        in: query
+        maxLength: 100
+        name: name
+        type: string
+      - description: Name of the group
+        in: query
+        maxLength: 100
+        name: group_name
+        type: string
+      - description: Release date of the song
+        format: date
+        in: query
+        name: release_date
+        type: string
+      - description: Lyrics of the song
+        in: query
+        maxLength: 10000
+        name: text
+        type: string
+      - description: Link to the song
+        format: url
+        in: query
+        name: link
+        type: string
+      - description: Page number for pagination
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: Number of songs per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of songs
+          schema:
+            items:
+              $ref: '#/definitions/models.Song'
+            type: array
+        "400":
+          description: Invalid input data
+          schema:
+            type: string
+        "404":
+          description: Songs not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Retrieve a list of songs
+      tags:
+      - Songs
+    post:
+      description: Create a new song in the library by providing song details in the
+        request body. The group and song name will be converted to lowercase before
+        saving.
+      parameters:
+      - description: Details of the song to create
+        in: body
+        name: createSongDTO
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateSongDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created song details
+          schema:
+            $ref: '#/definitions/models.Song'
+        "400":
+          description: Invalid input data
+          schema:
+            type: string
+        "404":
+          description: Data not found
+          schema:
+            type: string
+        "409":
+          description: Song already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new song
+      tags:
+      - Songs
+  /api/songs/{id}:
+    delete:
+      description: Remove a song from the library using its UUID. The song ID should
+        be in UUID format.
+      parameters:
+      - description: UUID of the song to delete
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted song details
+          schema:
+            $ref: '#/definitions/models.Song'
+        "400":
+          description: Invalid song ID format
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a song by its ID
+      tags:
+      - Songs
+    put:
+      description: Update the details of a song in the library using its UUID. The
+        song ID should be in UUID format. The request body should contain the fields
+        to be updated.
+      parameters:
+      - description: UUID of the song to update
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: fieldsToUpdate
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateSongsDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated song details
+          schema:
+            $ref: '#/definitions/models.Song'
+        "400":
+          description: Invalid input data
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update a song by its ID
+      tags:
+      - Songs
+  /api/songs/{id}/lyrics:
+    get:
+      description: Fetch the lyrics of a specific song identified by its ID. Optional
+        query parameters can be used to filter the results further.
+      parameters:
+      - description: ID of the song
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pagination parameters
+        in: body
+        name: getSongLyricsDTO
+        schema:
+          $ref: '#/definitions/dtos.GetSongLyricsDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lyrics of the song
+          schema:
+            type: string
+        "400":
+          description: Invalid input data
+          schema:
+            type: string
+        "404":
+          description: Song not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Retrieve lyrics of a song
+      tags:
+      - Songs
+swagger: "2.0"
