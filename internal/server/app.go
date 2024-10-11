@@ -70,6 +70,8 @@ func (a *App) Run(port string) error {
 		Handler: router,
 	}
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Starting server on port %s", port))
+
 	go func() {
 		if err := a.httpServer.ListenAndServe(); err != nil {
 			logrusCustom.Logger.Fatalf("Failed to listen and serve: %+v", err)
