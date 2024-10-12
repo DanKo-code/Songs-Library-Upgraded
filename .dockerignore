@@ -2,3 +2,4 @@
 InitDB.txt
 app.log
 .gitignore
+docker-compose.yml

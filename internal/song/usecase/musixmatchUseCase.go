@@ -3,6 +3,7 @@ package usecase
 import (
 	"SongsLibrary/internal/song"
 	logrusCustom "SongsLibrary/pkg/logger"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ type Track struct {
 	Link        string `json:"track_share_url"`
 }
 
-func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, string, string, error) {
+func (mmuc *MusixMatchUseCase) GetSongIP(ctx context.Context, groupName, songName string) (string, string, string, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongIP UseCase with parameters: groupName:%s, song:%s", groupName, songName))
 
@@ -58,7 +59,7 @@ func (mmuc *MusixMatchUseCase) GetSongIP(groupName, songName string) (string, st
 
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP URL: musixMatchUrl:%s", musixMatchUrl))
 
-	req, err := http.NewRequest("GET", musixMatchUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", musixMatchUrl, nil)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
@@ -118,7 +119,7 @@ type GetSongLyricsResult struct {
 	} `json:"message"`
 }
 
-func (mmuc *MusixMatchUseCase) GetLyrics(ip string) (string, error) {
+func (mmuc *MusixMatchUseCase) GetLyrics(ctx context.Context, ip string) (string, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetLyrics UseCase with parameter: ip:%s", ip))
 
@@ -126,7 +127,7 @@ func (mmuc *MusixMatchUseCase) GetLyrics(ip string) (string, error) {
 
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongLyrics URL: musixMatchUrl:%s", musixMatchUrl))
 
-	req, err := http.NewRequest("GET", musixMatchUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", musixMatchUrl, nil)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 

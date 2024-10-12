@@ -6,6 +6,7 @@ import (
 	"SongsLibrary/internal/song/constants"
 	"SongsLibrary/internal/song/dtos"
 	logrusCustom "SongsLibrary/pkg/logger"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -23,13 +24,13 @@ func NewSongRepository(db *gorm.DB) *SongRepository {
 	return &SongRepository{db: db}
 }
 
-func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
+func (sr *SongRepository) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongs Repository with parameters: %+v", gsdto))
 
 	var songs []models.Song
 
-	query := sr.db.Model(&models.Song{})
+	query := sr.db.WithContext(ctx).Model(&models.Song{})
 
 	if gsdto.Name != "" {
 		query = query.Where("name LIKE ?", "%"+gsdto.Name+"%")
@@ -69,13 +70,13 @@ func (sr *SongRepository) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, erro
 	return songs, nil
 }
 
-func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
+func (sr *SongRepository) DeleteSong(ctx context.Context, id uuid.UUID) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong Repository with parameter: %s", id.String()))
 
 	var songToDelete models.Song
 
-	if err := sr.db.Debug().First(&songToDelete, "id = ?", id).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().First(&songToDelete, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
 
@@ -86,7 +87,7 @@ func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
 		return nil, err
 	}
 
-	if err := sr.db.Debug().Delete(&models.Song{}, id).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().Delete(&models.Song{}, id).Error; err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
 
 		return nil, err
@@ -97,11 +98,11 @@ func (sr *SongRepository) DeleteSong(id uuid.UUID) (*models.Song, error) {
 	return &songToDelete, nil
 }
 
-func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
+func (sr *SongRepository) UpdateSong(ctx context.Context, fieldsToUpdate *models.Song) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSong Repository with parameter: %+v", fieldsToUpdate))
 
-	result := sr.db.Debug().Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate)
+	result := sr.db.WithContext(ctx).Debug().Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate)
 	if result.Error != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, result.Error.Error())
 
@@ -115,7 +116,7 @@ func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song,
 	}
 
 	var updatedSong models.Song
-	if err := sr.db.Debug().First(&updatedSong, "id = ?", fieldsToUpdate.ID).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().First(&updatedSong, "id = ?", fieldsToUpdate.ID).Error; err != nil {
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
@@ -132,9 +133,9 @@ func (sr *SongRepository) UpdateSong(fieldsToUpdate *models.Song) (*models.Song,
 	return &updatedSong, nil
 }
 
-func (sr *SongRepository) CreateSong(releaseDate time.Time, group string, songName string, lyrics string, link string) (*models.Song, error) {
+func (sr *SongRepository) CreateSong(ctx context.Context, releaseDate time.Time, group string, songName string, lyrics string, link string) (*models.Song, error) {
 	var songToCreate *models.Song = &models.Song{ID: uuid.New(), Name: songName, GroupName: group, Text: lyrics, Link: link, ReleaseDate: releaseDate}
-	if err := sr.db.Debug().Create(&songToCreate).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().Create(&songToCreate).Error; err != nil {
 
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
@@ -149,12 +150,12 @@ func (sr *SongRepository) CreateSong(releaseDate time.Time, group string, songNa
 	return songToCreate, nil
 }
 
-func (sr *SongRepository) GetSong(id uuid.UUID) (*models.Song, error) {
+func (sr *SongRepository) GetSong(ctx context.Context, id uuid.UUID) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSong Repository with parameter: id:%s", id.String()))
 
 	var songToGet models.Song
-	if err := sr.db.Debug().First(&songToGet, "id = ?", id).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().First(&songToGet, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 
 			return nil, song.SongsNotFound
@@ -168,12 +169,12 @@ func (sr *SongRepository) GetSong(id uuid.UUID) (*models.Song, error) {
 	return &songToGet, nil
 }
 
-func (sr *SongRepository) GetSongByName(name string) (*models.Song, error) {
+func (sr *SongRepository) GetSongByName(ctx context.Context, name string) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongByName Repository with parameter: name:%s", name))
 
 	var songToGet models.Song
-	if err := sr.db.Debug().First(&songToGet, "name = ?", name).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().First(&songToGet, "name = ?", name).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 
 			return nil, song.SongsNotFound

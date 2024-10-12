@@ -5,6 +5,7 @@ import (
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	logrusCustom "SongsLibrary/pkg/logger"
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -69,7 +70,10 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	gsdto.SetDefaults()
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))
 
-	songs, err := h.useCase.GetSongs(&gsdto)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	songs, err := h.useCase.GetSongs(ctx, &gsdto)
 	if err != nil {
 
 		if err.Error() == song.SongsNotFound.Error() {
@@ -110,7 +114,10 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Successfully converted songId to uuid format: %s", convertedId.String()))
 
-	deleteSong, err := h.useCase.DeleteSong(convertedId)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	deleteSong, err := h.useCase.DeleteSong(ctx, convertedId)
 	if err != nil {
 
 		if err.Error() == song.SongsNotFound.Error() {
@@ -188,7 +195,10 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 		Link:        fieldsToUpdate.Link,
 		ReleaseDate: releaseDateCasted}
 
-	updateSong, err := h.useCase.UpdateSong(&songToUpdate)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	updateSong, err := h.useCase.UpdateSong(ctx, &songToUpdate)
 	if err != nil {
 
 		if err.Error() == song.SongsNotFound.Error() {
@@ -237,7 +247,10 @@ func (h *Handler) CreateSong(c *gin.Context) {
 	}
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
-	createSong, err := h.useCase.CreateSong(strings.ToLower(createSongDTO.Group), strings.ToLower(createSongDTO.Song))
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	createSong, err := h.useCase.CreateSong(ctx, strings.ToLower(createSongDTO.Group), strings.ToLower(createSongDTO.Song))
 	if err != nil {
 
 		if err.Error() == song.ErrorGetSongData.Error() {
@@ -311,7 +324,10 @@ func (h *Handler) GetSongLyrics(c *gin.Context) {
 
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsldtp))
 
-	lyrics, err := h.useCase.GetSongLyrics(&gsldtp)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	lyrics, err := h.useCase.GetSongLyrics(ctx, &gsldtp)
 	if err != nil {
 
 		if err.Error() == song.ErrorGetSongData.Error() {
