@@ -268,7 +268,8 @@ func (h *Handler) CreateSong(c *gin.Context) {
 // @Tags Songs
 // @Produce json
 // @Param id path string true "ID of the song"
-// @Param getSongLyricsDTO body dtos.GetSongLyricsDTO false "Pagination parameters"
+// @Param page query int false "Page number for pagination" minimum(1)
+// @Param page_size query int false "Number of songs per page" minimum(1) maximum(100)
 // @Success 200 {object} string "Lyrics of the song"
 // @Failure 400 {object} string "Invalid input data"
 // @Failure 404 {object} string "Song not found"
@@ -296,6 +297,15 @@ func (h *Handler) GetSongLyrics(c *gin.Context) {
 		return
 	}
 	gsldtp.Id = convertedId
+
+	err = h.validate.Struct(gsldtp)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidInputData.Error()})
+		return
+	}
+	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
 
 	gsldtp.SetDefaults()
 
