@@ -272,12 +272,19 @@
                         "required": true
                     },
                     {
-                        "description": "Pagination parameters",
-                        "name": "getSongLyricsDTO",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/dtos.GetSongLyricsDTO"
-                        }
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Number of songs per page",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -320,23 +327,6 @@
                 "song": {
                     "type": "string",
                     "maxLength": 100
-                }
-            }
-        },
-        "dtos.GetSongLyricsDTO": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "page": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "page_size": {
-                    "type": "integer",
-                    "maximum": 100,
-                    "minimum": 1
                 }
             }
         },

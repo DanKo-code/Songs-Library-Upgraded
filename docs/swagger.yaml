@@ -8,18 +8,6 @@ definitions:
         maxLength: 100
         type: string
     type: object
-  dtos.GetSongLyricsDTO:
-    properties:
-      id:
-        type: string
-      page:
-        minimum: 1
-        type: integer
-      page_size:
-        maximum: 100
-        minimum: 1
-        type: integer
-    type: object
   dtos.UpdateSongsDTO:
     properties:
       group_name:
@@ -239,11 +227,17 @@ paths:
         name: id
         required: true
         type: string
-      - description: Pagination parameters
-        in: body
-        name: getSongLyricsDTO
-        schema:
-          $ref: '#/definitions/dtos.GetSongLyricsDTO'
+      - description: Page number for pagination
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: Number of songs per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
