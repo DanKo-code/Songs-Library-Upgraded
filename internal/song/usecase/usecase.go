@@ -5,6 +5,7 @@ import (
 	"SongsLibrary/internal/song"
 	"SongsLibrary/internal/song/dtos"
 	logrusCustom "SongsLibrary/pkg/logger"
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -21,11 +22,11 @@ func NewSongUseCase(songRepo song.Repository, musixMatchUseCase song.MusixmatchU
 	return &SongUseCase{songRepo: songRepo, musixMatchUseCase: musixMatchUseCase}
 }
 
-func (suc *SongUseCase) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
+func (suc *SongUseCase) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongs UseCase with parameters: %+v", gsdto))
 
-	songs, err := suc.songRepo.GetSongs(gsdto)
+	songs, err := suc.songRepo.GetSongs(ctx, gsdto)
 	if err != nil {
 		return nil, err
 	}
@@ -35,11 +36,11 @@ func (suc *SongUseCase) GetSongs(gsdto *dtos.GetSongsDTO) ([]models.Song, error)
 	return songs, nil
 }
 
-func (suc *SongUseCase) DeleteSong(id uuid.UUID) (*models.Song, error) {
+func (suc *SongUseCase) DeleteSong(ctx context.Context, id uuid.UUID) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong UseCase with parameter: %+v", id.String()))
 
-	deletedSong, err := suc.songRepo.DeleteSong(id)
+	deletedSong, err := suc.songRepo.DeleteSong(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +50,11 @@ func (suc *SongUseCase) DeleteSong(id uuid.UUID) (*models.Song, error) {
 	return deletedSong, nil
 }
 
-func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, error) {
+func (suc *SongUseCase) UpdateSong(ctx context.Context, fieldsToUpdate *models.Song) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSongs UseCase with parameters: %+v", fieldsToUpdate))
 
-	updatedSong, err := suc.songRepo.UpdateSong(fieldsToUpdate)
+	updatedSong, err := suc.songRepo.UpdateSong(ctx, fieldsToUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -63,11 +64,11 @@ func (suc *SongUseCase) UpdateSong(fieldsToUpdate *models.Song) (*models.Song, e
 	return updatedSong, nil
 }
 
-func (suc *SongUseCase) CreateSong(group, songName string) (*models.Song, error) {
+func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) (*models.Song, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered CreateSongs UseCase with parameters: group:%s, song:%s", group, songName))
 
-	createdSong, err := suc.songRepo.GetSongByName(songName)
+	createdSong, err := suc.songRepo.GetSongByName(ctx, songName)
 	if err != nil && err.Error() != song.SongsNotFound.Error() {
 		return nil, err
 	}
@@ -77,12 +78,12 @@ func (suc *SongUseCase) CreateSong(group, songName string) (*models.Song, error)
 		return nil, song.SongAlreadyExists
 	}
 
-	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(group, songName)
+	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(ctx, group, songName)
 	if err != nil {
 		return nil, err
 	}
 
-	lyrics, err := suc.musixMatchUseCase.GetLyrics(ip)
+	lyrics, err := suc.musixMatchUseCase.GetLyrics(ctx, ip)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func (suc *SongUseCase) CreateSong(group, songName string) (*models.Song, error)
 		return nil, err
 	}
 
-	createdSong, err = suc.songRepo.CreateSong(releaseDateCasted, group, songName, lyrics, link)
+	createdSong, err = suc.songRepo.CreateSong(ctx, releaseDateCasted, group, songName, lyrics, link)
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +105,11 @@ func (suc *SongUseCase) CreateSong(group, songName string) (*models.Song, error)
 	return createdSong, nil
 }
 
-func (suc *SongUseCase) GetSongLyrics(gsldto *dtos.GetSongLyricsDTO) ([]string, error) {
+func (suc *SongUseCase) GetSongLyrics(ctx context.Context, gsldto *dtos.GetSongLyricsDTO) ([]string, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongLyrics UseCase with parameters: %+v", gsldto))
 
-	existingSong, err := suc.songRepo.GetSong(gsldto.Id)
+	existingSong, err := suc.songRepo.GetSong(ctx, gsldto.Id)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
