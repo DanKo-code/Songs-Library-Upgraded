@@ -247,5 +247,5 @@ func (mmuc *MusixMatchUseCase) GetLyrics(ctx context.Context, ip string) (string
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetLyrics UseCase with song lyrics: %+v", lyricsBody))
 
-	return lyricsBody, nil
+	return strings.ToLower(lyricsBody), nil
 }
