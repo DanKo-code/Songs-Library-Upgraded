@@ -70,7 +70,7 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	gsdto.SetDefaults()
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 1000*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	gsdto.Text = strings.ToLower(gsdto.Text)
@@ -208,7 +208,7 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 		Link:        fieldsToUpdate.Link,
 		ReleaseDate: releaseDateCasted}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 1000*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	updateSong, err := h.useCase.UpdateSong(ctx, &songToUpdate)

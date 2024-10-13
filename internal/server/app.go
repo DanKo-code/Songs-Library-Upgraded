@@ -47,6 +47,7 @@ func NewApp() *App {
 		os.Getenv("GAPI_BASE_URL"),
 		os.Getenv("GAPI_GET_SONG_RELEASE_DATE"),
 		os.Getenv("GAPI_AUTHORIZATION"),
+		&http.Client{},
 	)
 
 	return &App{

@@ -16,6 +16,6 @@ type UseCase interface {
 }
 
 type MusixmatchUseCase interface {
-	GetSongIP(ctx context.Context, groupName, song string) (string, string, string, error)
+	GetSongData(ctx context.Context, groupName, song string) (string, string, string, string, string, error)
 	GetLyrics(ctx context.Context, ip string) (string, error)
 }

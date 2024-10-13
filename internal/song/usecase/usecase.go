@@ -78,7 +78,7 @@ func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) 
 		return nil, song.AuthorAlreadyExists
 	}
 
-	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(ctx, group, songName)
+	ip, link, releaseDate, trackName, artistName, err := suc.musixMatchUseCase.GetSongData(ctx, group, songName)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) 
 		return nil, err
 	}
 
-	createdSong, err := suc.songRepo.CreateSong(ctx, releaseDateCasted, group, songName, lyrics, link)
+	createdSong, err := suc.songRepo.CreateSong(ctx, releaseDateCasted, artistName, trackName, lyrics, link)
 	if err != nil {
 		return nil, err
 	}

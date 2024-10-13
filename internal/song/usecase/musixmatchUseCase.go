@@ -24,9 +24,10 @@ type MusixMatchUseCase struct {
 	geniusBaseURL               string
 	geniusGetSongReleaseDateURL string
 	geniusAuthorization         string
+	client                      *http.Client
 }
 
-func CreateMusixMatchUseCase(baseURL, getSongIPPath, getLyricsPath, apiKey, geniusBaseURL, geniusGetSongReleaseDateURL, geniusAuthorization string) *MusixMatchUseCase {
+func CreateMusixMatchUseCase(baseURL, getSongIPPath, getLyricsPath, apiKey, geniusBaseURL, geniusGetSongReleaseDateURL, geniusAuthorization string, client *http.Client) *MusixMatchUseCase {
 	return &MusixMatchUseCase{
 		baseURL:       baseURL,
 		getSongIPPath: getSongIPPath,
@@ -36,6 +37,7 @@ func CreateMusixMatchUseCase(baseURL, getSongIPPath, getLyricsPath, apiKey, geni
 		geniusBaseURL:               geniusBaseURL,
 		geniusGetSongReleaseDateURL: geniusGetSongReleaseDateURL,
 		geniusAuthorization:         geniusAuthorization,
+		client:                      client,
 	}
 }
 
@@ -55,9 +57,10 @@ type Track struct {
 	Id          int    `json:"commontrack_id"`
 	ReleaseDate string `json:"updated_time"`
 	Link        string `json:"track_share_url"`
+	TrackName   string `json:"track_name"`
+	ArtistName  string `json:"artist_name"`
 }
 
-// Genius
 type GetSongReleaseDateResult struct {
 	Response struct {
 		HitsList []HitWrapper `json:"hits"`
@@ -76,7 +79,7 @@ type Result struct {
 	} `json:"release_date_components"`
 }
 
-func (mmuc *MusixMatchUseCase) GetSongIP(ctx context.Context, groupName, songName string) (string, string, string, error) {
+func (mmuc *MusixMatchUseCase) GetSongData(ctx context.Context, groupName, songName string) (string, string, string, string, string, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongIP UseCase with parameters: groupName:%s, song:%s", groupName, songName))
 
@@ -89,100 +92,128 @@ func (mmuc *MusixMatchUseCase) GetSongIP(ctx context.Context, groupName, songNam
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP: musixMatchUrl:%s", musixMatchUrl))
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongReleaseDate URL: geniusUrl:%s", geniusUrl))
 
+	songDataChan := make(chan struct {
+		songIP, link, trackName, artistName string
+		err                                 error
+	})
+	releaseDateChan := make(chan struct {
+		releaseDate string
+		err         error
+	})
+
+	go func() {
+		songIP, link, trackName, artistName, err := mmuc.fetchSongData(ctx, musixMatchUrl)
+		songDataChan <- struct {
+			songIP, link, trackName, artistName string
+			err                                 error
+		}{songIP, link, trackName, artistName, err}
+	}()
+
+	go func() {
+		releaseDate, err := mmuc.fetchSongReleaseDate(ctx, geniusUrl)
+		releaseDateChan <- struct {
+			releaseDate string
+			err         error
+		}{releaseDate, err}
+	}()
+
+	songData := <-songDataChan
+	releaseData := <-releaseDateChan
+
+	if songData.err != nil {
+		return "", "", "", "", "", songData.err
+	}
+	if releaseData.err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, releaseData.err.Error())
+
+		releaseData.releaseDate = ""
+	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongIP UseCase with song data: ip:%s, link:%s, releaseDate:%s", songData.songIP, songData.link, releaseData.releaseDate))
+	return songData.songIP, songData.link, releaseData.releaseDate, strings.ToLower(songData.trackName), strings.ToLower(songData.artistName), nil
+}
+
+func (mmuc *MusixMatchUseCase) fetchSongData(ctx context.Context, musixMatchUrl string) (string, string, string, string, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", musixMatchUrl, nil)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", "", "", "", song.ErrorGetSongData
 	}
-	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongIP REQ: %+v", req))
 
-	reqGenius, err := http.NewRequestWithContext(ctx, "GET", geniusUrl, nil)
+	resp, err := mmuc.client.Do(req)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", "", "", "", song.ErrorGetSongData
 	}
-	reqGenius.Header.Set("Authorization", mmuc.geniusAuthorization)
-	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongReleaseDate REQ: %+v", req))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
-	}
-	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongIP RES: %+v", resp))
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", "", "", "", song.ErrorGetSongData
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
-
-		return "", "", "", song.ErrorGetSongData
+		return "", "", "", "", song.ErrorGetSongData
 	}
 
 	var getSongIPResult GetSongIPResult
 	if err := json.Unmarshal(body, &getSongIPResult); err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", "", "", "", song.ErrorGetSongData
 	}
 
-	//genius
-	clientGenius := &http.Client{}
-	respGenius, err := clientGenius.Do(reqGenius)
+	if len(getSongIPResult.Message.Body.TrackList) == 0 {
+		return "", "", "", "", song.ErrorGetSongData
+	}
+
+	songIp := strconv.Itoa(getSongIPResult.Message.Body.TrackList[0].Track.Id)
+	link := getSongIPResult.Message.Body.TrackList[0].Track.Link
+	trackName := getSongIPResult.Message.Body.TrackList[0].Track.TrackName
+	artistName := getSongIPResult.Message.Body.TrackList[0].Track.ArtistName
+	return songIp, link, trackName, artistName, nil
+}
+
+func (mmuc *MusixMatchUseCase) fetchSongReleaseDate(ctx context.Context, geniusUrl string) (string, error) {
+	reqGenius, err := http.NewRequestWithContext(ctx, "GET", geniusUrl, nil)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", song.ErrorGetSongData
 	}
-	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Recieved GetSongReleaseDate RES: %+v", resp))
+	reqGenius.Header.Set("Authorization", mmuc.geniusAuthorization)
+
+	respGenius, err := mmuc.client.Do(reqGenius)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+		return "", song.ErrorGetSongData
+	}
 	defer respGenius.Body.Close()
 
 	bodyGenius, err := io.ReadAll(respGenius.Body)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", song.ErrorGetSongData
 	}
 
 	if respGenius.StatusCode != http.StatusOK {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", resp.StatusCode, body))
-
-		return "", "", "", song.ErrorGetSongData
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("unexpected status code: %d, body: %s", respGenius.StatusCode, bodyGenius))
+		return "", song.ErrorGetSongData
 	}
 
 	var getSongReleaseDateResult GetSongReleaseDateResult
 	if err := json.Unmarshal(bodyGenius, &getSongReleaseDateResult); err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
-
-		return "", "", "", song.ErrorGetSongData
+		return "", song.ErrorGetSongData
 	}
 
-	if len(getSongIPResult.Message.Body.TrackList) != 0 {
-		songIp := getSongIPResult.Message.Body.TrackList[0].Track.Id
-		link := getSongIPResult.Message.Body.TrackList[0].Track.Link
-
-		var releaseDate time.Time
-		if respGenius.StatusCode == http.StatusOK {
-			rdc := getSongReleaseDateResult.Response.HitsList[0].Result.ReleaseDateComponents
-
-			releaseDate = time.Date(rdc.Year, time.Month(rdc.Month), rdc.Day, 0, 0, 0, 0, time.UTC)
-		}
-
-		logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongIP UseCase with song data: ip:%s, link:%s, releaseDate:%s", strconv.Itoa(songIp), link, releaseDate))
-		return strconv.Itoa(songIp), link, releaseDate.String(), nil
+	if len(getSongReleaseDateResult.Response.HitsList) == 0 {
+		return "", song.ErrorGetSongData
 	}
 
-	return "", "", "", song.ErrorGetSongData
+	rdc := getSongReleaseDateResult.Response.HitsList[0].Result.ReleaseDateComponents
+	releaseDate := time.Date(rdc.Year, time.Month(rdc.Month), rdc.Day, 0, 0, 0, 0, time.UTC)
+	return releaseDate.String(), nil
 }
 
 type GetSongLyricsResult struct {
@@ -210,8 +241,7 @@ func (mmuc *MusixMatchUseCase) GetLyrics(ctx context.Context, ip string) (string
 	}
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Builded GetSongLyrics REQ: %+v", req))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := mmuc.client.Do(req)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
