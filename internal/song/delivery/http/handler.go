@@ -138,7 +138,7 @@ func (h *Handler) DeleteSong(c *gin.Context) {
 // @Tags Songs
 // @Produce json
 // @Param id path string true "UUID of the song to update" format(uuid)
-// @Param fieldsToUpdate body dtos.UpdateSongsDTO true "Fields to update"
+// @Param fieldsToUpdate body dtos.UpdateSongsDTO false "Fields to update"
 // @Success 200 {object} models.Song "Updated song details"
 // @Failure 400 {object} string "Invalid input data"
 // @Failure 404 {object} string "Song not found"
@@ -187,14 +187,23 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 		}
 	}
 
-	var songToUpdate models.Song = models.Song{
+	convertedAuthorId, err := uuid.Parse(fieldsToUpdate.GroupId)
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidAuthorIdFormat.Error()})
+		return
+	}
+
+	var songToUpdate = models.Song{
 		ID:          convertedId,
 		Name:        fieldsToUpdate.Name,
+		AuthorId:    convertedAuthorId,
 		Text:        fieldsToUpdate.Text,
 		Link:        fieldsToUpdate.Link,
 		ReleaseDate: releaseDateCasted}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1000*time.Second)
 	defer cancel()
 
 	updateSong, err := h.useCase.UpdateSong(ctx, &songToUpdate)

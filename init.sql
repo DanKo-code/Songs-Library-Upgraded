@@ -1,4 +1,3 @@
--- init.sql
 CREATE DATABASE "songlibrarydb";
 CREATE USER "songlibraryadmin" WITH PASSWORD 'SongLibraryAdmin2024';
 GRANT ALL PRIVILEGES ON DATABASE "songlibrarydb" TO "songlibraryadmin";

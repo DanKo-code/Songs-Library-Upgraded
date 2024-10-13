@@ -102,7 +102,33 @@ func (sr *SongRepository) UpdateSong(ctx context.Context, fieldsToUpdate *models
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered UpdateSong Repository with parameter: %+v", fieldsToUpdate))
 
-	result := sr.db.WithContext(ctx).Debug().Model(&models.Song{}).Where("id = ?", fieldsToUpdate.ID).Updates(fieldsToUpdate)
+	dataToUpdate := make(map[string]interface{})
+
+	if fieldsToUpdate.Name != "" {
+		nameValue := interface{}(fieldsToUpdate.Name)
+		dataToUpdate["name"] = &nameValue
+	}
+
+	if fieldsToUpdate.AuthorId.String() != "" {
+		dataToUpdate["author_id"] = fieldsToUpdate.AuthorId
+	}
+
+	if fieldsToUpdate.ReleaseDate.String() != constants.DateNilValue {
+		dataToUpdate["release_date"] = fieldsToUpdate.ReleaseDate
+	}
+
+	if fieldsToUpdate.Text != "" {
+		dataToUpdate["text"] = fieldsToUpdate.Text
+	}
+
+	if fieldsToUpdate.Link != "" {
+		dataToUpdate["link"] = fieldsToUpdate.Link
+	}
+
+	result := sr.db.WithContext(ctx).Debug().
+		Model(&models.Song{}).
+		Where("id = ?", fieldsToUpdate.ID).
+		Updates(dataToUpdate)
 	if result.Error != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, result.Error.Error())
 
@@ -160,7 +186,7 @@ func (sr *SongRepository) CreateSong(ctx context.Context, releaseDate time.Time,
 	songToCreate := &models.Song{
 		ID:          uuid.New(),
 		Name:        songName,
-		AuthorID:    author.ID,
+		AuthorId:    author.ID,
 		Text:        lyrics,
 		Link:        link,
 		ReleaseDate: releaseDate,
