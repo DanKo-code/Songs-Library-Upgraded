@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"strings"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func (sr *SongRepository) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO)
 		query = query.Where("name LIKE ?", "%"+gsdto.Name+"%")
 	}
 	if gsdto.GroupName != "" {
-		query = query.Where("group_name LIKE ?", "%"+gsdto.GroupName+"%")
+		query = query.Joins("JOIN author ON author.id = song.author_id").Where("author.group_name LIKE ?", "%"+strings.ToLower(gsdto.GroupName)+"%")
 	}
 	if gsdto.ReleaseDate != "" {
 		query = query.Where("release_date = ?", gsdto.ReleaseDate)
@@ -76,7 +77,7 @@ func (sr *SongRepository) DeleteSong(ctx context.Context, id uuid.UUID) (*models
 
 	var songToDelete models.Song
 
-	if err := sr.db.WithContext(ctx).Debug().First(&songToDelete, "id = ?", id).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().Preload("Author").First(&songToDelete, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())
 
@@ -105,15 +106,14 @@ func (sr *SongRepository) UpdateSong(ctx context.Context, fieldsToUpdate *models
 	dataToUpdate := make(map[string]interface{})
 
 	if fieldsToUpdate.Name != "" {
-		nameValue := interface{}(fieldsToUpdate.Name)
-		dataToUpdate["name"] = &nameValue
+		dataToUpdate["name"] = fieldsToUpdate.Name
 	}
 
-	if fieldsToUpdate.AuthorId.String() != "" {
+	if fieldsToUpdate.AuthorId != uuid.Nil {
 		dataToUpdate["author_id"] = fieldsToUpdate.AuthorId
 	}
 
-	if fieldsToUpdate.ReleaseDate.String() != constants.DateNilValue {
+	if !fieldsToUpdate.ReleaseDate.IsZero() {
 		dataToUpdate["release_date"] = fieldsToUpdate.ReleaseDate
 	}
 
@@ -142,7 +142,7 @@ func (sr *SongRepository) UpdateSong(ctx context.Context, fieldsToUpdate *models
 	}
 
 	var updatedSong models.Song
-	if err := sr.db.WithContext(ctx).Debug().First(&updatedSong, "id = ?", fieldsToUpdate.ID).Error; err != nil {
+	if err := sr.db.WithContext(ctx).Debug().Preload("Author").First(&updatedSong, "id = ?", fieldsToUpdate.ID).Error; err != nil {
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongsNotFound.Error())

@@ -70,8 +70,10 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	gsdto.SetDefaults()
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1000*time.Second)
 	defer cancel()
+
+	gsdto.Text = strings.ToLower(gsdto.Text)
 
 	songs, err := h.useCase.GetSongs(ctx, &gsdto)
 	if err != nil {
@@ -178,7 +180,7 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 
 	var releaseDateCasted time.Time
 	if fieldsToUpdate.ReleaseDate != "" {
-		releaseDateCasted, err = time.Parse(time.RFC3339, fieldsToUpdate.ReleaseDate)
+		releaseDateCasted, err = time.Parse("2006-01-02", fieldsToUpdate.ReleaseDate)
 		if err != nil {
 			logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
@@ -187,19 +189,22 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 		}
 	}
 
-	convertedAuthorId, err := uuid.Parse(fieldsToUpdate.GroupId)
-	if err != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+	var convertedAuthorId uuid.UUID
+	if fieldsToUpdate.GroupId != "" {
+		convertedAuthorId, err = uuid.Parse(fieldsToUpdate.GroupId)
+		if err != nil {
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidAuthorIdFormat.Error()})
-		return
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidAuthorIdFormat.Error()})
+			return
+		}
 	}
 
 	var songToUpdate = models.Song{
 		ID:          convertedId,
-		Name:        fieldsToUpdate.Name,
+		Name:        strings.ToLower(fieldsToUpdate.Name),
 		AuthorId:    convertedAuthorId,
-		Text:        fieldsToUpdate.Text,
+		Text:        strings.ToLower(fieldsToUpdate.Text),
 		Link:        fieldsToUpdate.Link,
 		ReleaseDate: releaseDateCasted}
 
