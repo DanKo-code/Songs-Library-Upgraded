@@ -68,14 +68,14 @@ func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) 
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered CreateSongs UseCase with parameters: group:%s, song:%s", group, songName))
 
-	createdSong, err := suc.songRepo.GetSongByName(ctx, songName)
-	if err != nil && err.Error() != song.SongsNotFound.Error() {
+	author, err := suc.songRepo.GetAuthorByName(ctx, songName)
+	if err != nil && err.Error() != song.AuthorNotFound.Error() {
 		return nil, err
 	}
-	if createdSong != nil {
-		logrusCustom.LogWithLocation(logrus.ErrorLevel, song.SongAlreadyExists.Error())
+	if author != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, song.AuthorAlreadyExists.Error())
 
-		return nil, song.SongAlreadyExists
+		return nil, song.AuthorAlreadyExists
 	}
 
 	ip, link, releaseDate, err := suc.musixMatchUseCase.GetSongIP(ctx, group, songName)
@@ -88,14 +88,14 @@ func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) 
 		return nil, err
 	}
 
-	releaseDateCasted, err := time.Parse(time.RFC3339, releaseDate)
+	releaseDateCasted, err := time.Parse("2006-01-02 15:04:05 -0700 MST", releaseDate)
 	if err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		return nil, err
 	}
 
-	createdSong, err = suc.songRepo.CreateSong(ctx, releaseDateCasted, group, songName, lyrics, link)
+	createdSong, err := suc.songRepo.CreateSong(ctx, releaseDateCasted, group, songName, lyrics, link)
 	if err != nil {
 		return nil, err
 	}

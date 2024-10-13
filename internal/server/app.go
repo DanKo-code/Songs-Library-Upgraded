@@ -43,6 +43,10 @@ func NewApp() *App {
 		os.Getenv("MMLAPI_GET_SONG_IP_PATH"),
 		os.Getenv("MMLAPI_GET_LYRICS_PATH"),
 		os.Getenv("MMLAPI_API_KEY"),
+
+		os.Getenv("GAPI_BASE_URL"),
+		os.Getenv("GAPI_GET_SONG_RELEASE_DATE"),
+		os.Getenv("GAPI_AUTHORIZATION"),
 	)
 
 	return &App{
