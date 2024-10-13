@@ -14,5 +14,5 @@ type Repository interface {
 	UpdateSong(context.Context, *models.Song) (*models.Song, error)
 	CreateSong(ctx context.Context, releaseDate time.Time, group string, songName string, lyrics string, link string) (*models.Song, error)
 	GetSong(context.Context, uuid.UUID) (*models.Song, error)
-	GetSongByName(ctx context.Context, name string) (*models.Song, error)
+	GetAuthorByName(ctx context.Context, autorName string) (*models.Author, error)
 }

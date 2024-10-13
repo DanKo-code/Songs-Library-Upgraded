@@ -190,7 +190,6 @@ func (h *Handler) UpdateSong(c *gin.Context) {
 	var songToUpdate models.Song = models.Song{
 		ID:          convertedId,
 		Name:        fieldsToUpdate.Name,
-		GroupName:   fieldsToUpdate.GroupName,
 		Text:        fieldsToUpdate.Text,
 		Link:        fieldsToUpdate.Link,
 		ReleaseDate: releaseDateCasted}
@@ -263,8 +262,13 @@ func (h *Handler) CreateSong(c *gin.Context) {
 			return
 		}
 
-		if err.Error() == song.SongAlreadyExists.Error() {
-			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": song.SongAlreadyExists.Error()})
+		if err.Error() == song.AuthorAlreadyExists.Error() {
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": song.AuthorAlreadyExists.Error()})
+			return
+		}
+
+		if err.Error() == song.AuthorSongDuplicate.Error() {
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": song.AuthorSongDuplicate.Error()})
 			return
 		}
 

@@ -51,7 +51,7 @@ func (sr *SongRepository) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO)
 	offset := (gsdto.Page - 1) * gsdto.PageSize
 	query = query.Offset(offset).Limit(gsdto.PageSize)
 
-	query = query.Debug()
+	query = query.Debug().Preload("Author")
 
 	if err := query.Find(&songs).Error; err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
@@ -134,18 +134,57 @@ func (sr *SongRepository) UpdateSong(ctx context.Context, fieldsToUpdate *models
 }
 
 func (sr *SongRepository) CreateSong(ctx context.Context, releaseDate time.Time, group string, songName string, lyrics string, link string) (*models.Song, error) {
-	var songToCreate *models.Song = &models.Song{ID: uuid.New(), Name: songName, GroupName: group, Text: lyrics, Link: link, ReleaseDate: releaseDate}
-	if err := sr.db.WithContext(ctx).Debug().Create(&songToCreate).Error; err != nil {
 
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered CreateSong Repository with parameter: releaseDate:%s, group:%s, songName:%s, lyrics:%s, link:%s",
+		releaseDate, group, songName, lyrics, link))
+
+	var author models.Author
+
+	if err := sr.db.WithContext(ctx).Debug().Where("group_name = ?", group).First(&author).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+
+			author = models.Author{
+				ID:        uuid.New(),
+				GroupName: group,
+			}
+			if err := sr.db.WithContext(ctx).Create(&author).Error; err != nil {
+				logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+				return nil, err
+			}
+		} else {
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+			return nil, song.AuthorAlreadyExists
+		}
+	}
+
+	songToCreate := &models.Song{
+		ID:          uuid.New(),
+		Name:        songName,
+		AuthorID:    author.ID,
+		Text:        lyrics,
+		Link:        link,
+		ReleaseDate: releaseDate,
+	}
+
+	if err := sr.db.WithContext(ctx).Debug().Create(&songToCreate).Error; err != nil {
 		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == constants.DbUniqueConstrintErr {
-			return nil, song.SongAlreadyExists
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, song.AuthorSongDuplicate.Error())
+			return nil, song.AuthorSongDuplicate
 		}
 
 		return nil, err
 	}
+
+	if err := sr.db.WithContext(ctx).Debug().Preload("Author").First(&songToCreate).Error; err != nil {
+
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+		return nil, err
+	}
+
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting CreateSong Repository with created song: %+v", songToCreate))
 
 	return songToCreate, nil
 }
@@ -169,21 +208,21 @@ func (sr *SongRepository) GetSong(ctx context.Context, id uuid.UUID) (*models.So
 	return &songToGet, nil
 }
 
-func (sr *SongRepository) GetSongByName(ctx context.Context, name string) (*models.Song, error) {
+func (sr *SongRepository) GetAuthorByName(ctx context.Context, groupName string) (*models.Author, error) {
 
-	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetSongByName Repository with parameter: name:%s", name))
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered GetAuthorByName Repository with parameter: group_name:%s", groupName))
 
-	var songToGet models.Song
-	if err := sr.db.WithContext(ctx).Debug().First(&songToGet, "name = ?", name).Error; err != nil {
+	var authorToGet models.Author
+	if err := sr.db.WithContext(ctx).Debug().First(&authorToGet, "group_name = ?", groupName).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 
-			return nil, song.SongsNotFound
+			return nil, song.AuthorNotFound
 		}
 
 		return nil, err
 	}
 
-	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetSongByName Repository with song: %+v", songToGet))
+	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Exiting GetAuthorByName Repository with author: %+v", authorToGet))
 
-	return &songToGet, nil
+	return &authorToGet, nil
 }
