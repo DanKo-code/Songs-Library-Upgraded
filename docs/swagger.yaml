@@ -10,8 +10,7 @@ definitions:
     type: object
   dtos.UpdateSongsDTO:
     properties:
-      group_name:
-        maxLength: 100
+      group_id:
         type: string
       link:
         type: string
@@ -24,9 +23,22 @@ definitions:
         maxLength: 10000
         type: string
     type: object
-  models.Song:
+  models.Author:
     properties:
       groupName:
+        type: string
+      id:
+        type: string
+      songs:
+        items:
+          $ref: '#/definitions/models.Song'
+        type: array
+    type: object
+  models.Song:
+    properties:
+      author:
+        $ref: '#/definitions/models.Author'
+      authorID:
         type: string
       id:
         type: string
@@ -192,7 +204,6 @@ paths:
       - description: Fields to update
         in: body
         name: fieldsToUpdate
-        required: true
         schema:
           $ref: '#/definitions/dtos.UpdateSongsDTO'
       produces:

@@ -184,7 +184,6 @@ const docTemplate = `{
                         "description": "Fields to update",
                         "name": "fieldsToUpdate",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/dtos.UpdateSongsDTO"
                         }
@@ -344,9 +343,8 @@ const docTemplate = `{
         "dtos.UpdateSongsDTO": {
             "type": "object",
             "properties": {
-                "group_name": {
-                    "type": "string",
-                    "maxLength": 100
+                "group_id": {
+                    "type": "string"
                 },
                 "link": {
                     "type": "string"
@@ -364,10 +362,30 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Song": {
+        "models.Author": {
             "type": "object",
             "properties": {
                 "groupName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Song"
+                    }
+                }
+            }
+        },
+        "models.Song": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/models.Author"
+                },
+                "authorID": {
                     "type": "string"
                 },
                 "id": {
