@@ -19,6 +19,8 @@ WORKDIR /root/
 COPY --from=build /app/SongsLibrary .
 
 COPY wait-for-it.sh /wait-for-it.sh
+
+RUN sed -i 's/\r$//' /wait-for-it.sh
 RUN chmod +x /wait-for-it.sh
 
 EXPOSE ${APP_PORT}
