@@ -27,6 +27,13 @@ const docTemplate = `{
                 "summary": "Retrieve a list of songs",
                 "parameters": [
                     {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID of the song",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
                         "maxLength": 100,
                         "type": "string",
                         "description": "Name of the song",
@@ -385,7 +392,7 @@ const docTemplate = `{
                 "author": {
                     "$ref": "#/definitions/models.Author"
                 },
-                "authorID": {
+                "authorId": {
                     "type": "string"
                 },
                 "id": {

@@ -38,7 +38,7 @@ definitions:
     properties:
       author:
         $ref: '#/definitions/models.Author'
-      authorID:
+      authorId:
         type: string
       id:
         type: string
@@ -60,6 +60,11 @@ paths:
         as name, group name, release date, text, link, and pagination. Each song can
         be filtered based on the available query parameters.
       parameters:
+      - description: UUID of the song
+        format: uuid
+        in: query
+        name: id
+        type: string
       - description: Name of the song
         in: query
         maxLength: 100

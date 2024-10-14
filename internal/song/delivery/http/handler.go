@@ -33,6 +33,7 @@ func NewHandler(useCase song.UseCase, validate *validator.Validate) *Handler {
 // @Description Fetch a list of songs from the library with filtering options such as name, group name, release date, text, link, and pagination. Each song can be filtered based on the available query parameters.
 // @Tags Songs
 // @Produce  json
+// @Param id query string false "UUID of the song" format(uuid)
 // @Param name query string false "Name of the song" maxlength(100)
 // @Param group_name query string false "Name of the group" maxlength(100)
 // @Param release_date query string false "Release date of the song" format(date)
@@ -66,6 +67,16 @@ func (h *Handler) GetSongs(c *gin.Context) {
 		return
 	}
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully validated parameters")
+
+	if gsdto.Id != "" {
+		_, err = uuid.Parse(gsdto.Id)
+		if err != nil {
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": song.InvalidSongIdFormat.Error()})
+			return
+		}
+	}
 
 	gsdto.SetDefaults()
 	logrusCustom.LogWithLocation(logrus.DebugLevel, fmt.Sprintf("Setted default parameters: %+v", gsdto))

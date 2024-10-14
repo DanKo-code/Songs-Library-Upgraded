@@ -5,6 +5,7 @@ import (
 )
 
 type GetSongsDTO struct {
+	Id          string `form:"id" binding:"omitempty"`
 	Name        string `form:"name" binding:"omitempty,max=100"`
 	GroupName   string `form:"group_name" binding:"omitempty,max=100"`
 	ReleaseDate string `form:"release_date" validate:"DateValidation"`

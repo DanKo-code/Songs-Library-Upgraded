@@ -33,6 +33,9 @@ func (sr *SongRepository) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO)
 
 	query := sr.db.WithContext(ctx).Model(&models.Song{})
 
+	if gsdto.Id != "" {
+		query = query.Where("id LIKE ?", "%"+gsdto.Id+"%")
+	}
 	if gsdto.Name != "" {
 		query = query.Where("name LIKE ?", "%"+gsdto.Name+"%")
 	}
