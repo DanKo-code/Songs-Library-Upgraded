@@ -16,4 +16,4 @@ curl https://raw.githubusercontent.com/vas3k/pepic/master/docker-compose.example
 docker-compose up
 ```
 
-4. Go to [http://localhost:8118](http://localhost:8118) and try uploading something. You should see uploaded images or videos in the local directory (`./uploads`) after that.
+4. Go to [http://localhost:3023/swagger/index.html#/](http://localhost:3023/swagger/index.html#/) and try uploading something. You should see swagger UI for testing api.
