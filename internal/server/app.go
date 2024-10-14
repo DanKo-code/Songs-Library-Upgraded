@@ -158,7 +158,7 @@ func initData(db *gorm.DB) {
 
 		releaseDateCastedFirstSong, _ := time.Parse("2006-01-02", "1969-11-02")
 		releaseDateCastedSecondSong, _ := time.Parse("2006-01-02", "1970-12-07")
-		releaseDateCastedThirdSong, _ := time.Parse("2006-01-02", "1994-01-01")
+		releaseDateCastedThirdSong, _ := time.Parse("2006-01-02", "1993-11-30")
 
 		songs := []models.Song{
 			{
@@ -179,11 +179,11 @@ func initData(db *gorm.DB) {
 			},
 			{
 				ID:          uuid.New(),
-				Name:        "have you ever seen the rain",
-				AuthorId:    authors[0].ID,
+				Name:        "девочка - пай",
+				AuthorId:    authors[1].ID,
 				ReleaseDate: releaseDateCastedSecondSong,
-				Text:        "someone told me long ago there's a calm before the storm,\\ni know; it's been comin' for some time.\\nwhen it's over, so they say, it'll rain a sunny day,\\ni know; shinin' down like water.",
-				Link:        "https://www.musixmatch.com/lyrics/Various-Artists-Creedence-Clearwater-Revival-Tribute/Have-You-Ever-Seen-The-Rain?utm_source=application&utm_campaign=api&utm_medium=DanKoKode%3A1409625027081",
+				Text:        "в тебе было столько желанья\\nи месяц над нами светил\\nкогда по маляве, придя на свиданье\\nя розы тебе подарил\\n\\nкакой ты казалась серьёзной\\nкачала в ответ головой\\nкогда я сказал, что отнял эти розы\\nв киоске на первой ямской\\n\\nкак было тепло, что нас с тобой вместе свело\\nдевочка-пай, рядом жиган и хулиган\\nв нашей твери нету таких даже среди шкур центровых\\nдевочка-пай, ты не грусти и не скучай\\n\\nпонты просадил я чуть позже\\nв делах узелки затянул",
+				Link:        "https://www.musixmatch.com/lyrics/%D0%9C%D0%B8%D1%85%D0%B0%D0%B8%D0%BB-%D0%9A%D1%80%D1%83%D0%B3/%D0%94%D0%B5%D0%B2%D0%BE%D1%87%D0%BA%D0%B0-%D0%9F%D0%B0%D0%B9?utm_source=application&utm_campaign=api&utm_medium=DanKoKode%3A1409625027081",
 			},
 		}
 
