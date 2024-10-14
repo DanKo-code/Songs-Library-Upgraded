@@ -1,3 +1,7 @@
+# Golang Test-Task
+
+Effective Mobile
+
 ## 🐳 Run using Docker Compose
 
 You can find [docker-compose.example.yml](./docker-compose.example.yml) in this repo and adapt it to your own needs. 
