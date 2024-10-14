@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -133,5 +134,64 @@ func initDB() *gorm.DB {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, "Successfully migrated to db")
 
+	initData(db)
+
 	return db
+}
+
+func initData(db *gorm.DB) {
+	var count int64
+	db.Model(&models.Author{}).Count(&count)
+	if count == 0 {
+		logrusCustom.LogWithLocation(logrus.InfoLevel, "Adding initial data to the database")
+
+		authors := []models.Author{
+			{
+				ID:        uuid.New(),
+				GroupName: "creedence clearwater revival",
+			},
+			{
+				ID:        uuid.New(),
+				GroupName: "михаил круг",
+			},
+		}
+
+		releaseDateCastedFirstSong, _ := time.Parse("2006-01-02", "1969-11-02")
+		releaseDateCastedSecondSong, _ := time.Parse("2006-01-02", "1970-12-07")
+		releaseDateCastedThirdSong, _ := time.Parse("2006-01-02", "1994-01-01")
+
+		songs := []models.Song{
+			{
+				ID:          uuid.New(),
+				Name:        "fortunate son",
+				AuthorId:    authors[0].ID,
+				ReleaseDate: releaseDateCastedFirstSong,
+				Text:        "some folks are born made to wave the flag\\nthey're red, white and blue\\nand when the band plays \\\"hail to the chief\\\"\\nthey point the cannon at you, lord\\n\\nit ain't me, it ain't me\\ni ain't no senator's son, son\\nit ain't me, it ain't me\\ni ain't no fortunate one\\n\\nsome folks are born, silver spoon in hand",
+				Link:        "https://www.musixmatch.com/lyrics/Creedence-Clearwater-Revival/Fortunate-Son?utm_source=application&utm_campaign=api&utm_medium=DanKoKode%3A1409625027081",
+			},
+			{
+				ID:          uuid.New(),
+				Name:        "фраер",
+				AuthorId:    authors[1].ID,
+				ReleaseDate: releaseDateCastedThirdSong,
+				Text:        "что ж ты, фраер, сдал назад\\nне по масти я тебе\\nты смотри в мои глаза\\nбрось трепаться о судьбе\\n\\nведь с тобой мой мусорок\\nя попутала рамсы\\nзавязала узелок\\nкак тугие две косы\\n\\nпомню как ты подошел\\nкак поскрипывал паркет\\nкак поставил на мой стол\\nчайных роз большой букет\\n\\nя решила ты - скокарь\\nили вор-авторитет\\nоказалось просто тварь",
+				Link:        "https://www.musixmatch.com/lyrics/%D0%9C%D0%B8%D1%85%D0%B0%D0%B8%D0%BB-%D0%9A%D1%80%D1%83%D0%B3/%D0%A4%D1%80%D0%B0%D0%B5%D1%80?utm_source=application&utm_campaign=api&utm_medium=DanKoKode%3A1409625027081",
+			},
+			{
+				ID:          uuid.New(),
+				Name:        "have you ever seen the rain",
+				AuthorId:    authors[0].ID,
+				ReleaseDate: releaseDateCastedSecondSong,
+				Text:        "someone told me long ago there's a calm before the storm,\\ni know; it's been comin' for some time.\\nwhen it's over, so they say, it'll rain a sunny day,\\ni know; shinin' down like water.",
+				Link:        "https://www.musixmatch.com/lyrics/Various-Artists-Creedence-Clearwater-Revival-Tribute/Have-You-Ever-Seen-The-Rain?utm_source=application&utm_campaign=api&utm_medium=DanKoKode%3A1409625027081",
+			},
+		}
+
+		db.Create(&authors)
+		db.Create(&songs)
+
+		logrusCustom.LogWithLocation(logrus.InfoLevel, "Initial data added successfully")
+	} else {
+		logrusCustom.LogWithLocation(logrus.InfoLevel, "Data already exists in the database, skipping initialization")
+	}
 }
