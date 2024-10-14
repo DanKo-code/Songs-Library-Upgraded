@@ -78,12 +78,14 @@ func (h *Handler) GetSongs(c *gin.Context) {
 	songs, err := h.useCase.GetSongs(ctx, &gsdto)
 	if err != nil {
 
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+
 		if err.Error() == song.SongsNotFound.Error() {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": song.SongsNotFound.Error()})
 			return
 		}
 
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": song.SongsNotFound.Error()})
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
