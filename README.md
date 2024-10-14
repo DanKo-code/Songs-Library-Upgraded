@@ -13,11 +13,12 @@ You can find [docker-compose.example.yml](./docker-compose.example.yml) in this 
 ```bash
 curl https://raw.githubusercontent.com/vas3k/pepic/master/docker-compose.example.yml -o docker-compose.yml
 ```
+3. Create .env file
 
-3. Now run it
+4. Now run it
 
 ```bash
 docker-compose up
 ```
 
-4. Go to [http://localhost:3023/swagger/index.html#/](http://localhost:3023/swagger/index.html#/). You should see swagger UI for testing api.
+5. Go to [http://localhost:3023/swagger/index.html#/](http://localhost:3023/swagger/index.html#/). You should see swagger UI for testing api.
