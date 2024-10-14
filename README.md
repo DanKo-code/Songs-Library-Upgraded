@@ -1,4 +1,4 @@
-## 🐳 Using Docker Compose
+## 🐳 Run using Docker Compose
 
 You can find [docker-compose.example.yml](./docker-compose.example.yml) in this repo and adapt it to your own needs. 
 
@@ -16,4 +16,4 @@ curl https://raw.githubusercontent.com/vas3k/pepic/master/docker-compose.example
 docker-compose up
 ```
 
-4. Go to [http://localhost:3023/swagger/index.html#/](http://localhost:3023/swagger/index.html#/) and try uploading something. You should see swagger UI for testing api.
+4. Go to [http://localhost:3023/swagger/index.html#/](http://localhost:3023/swagger/index.html#/). You should see swagger UI for testing api.
