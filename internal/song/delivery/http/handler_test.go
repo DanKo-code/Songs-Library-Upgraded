@@ -21,7 +21,6 @@ import (
 	"time"
 )
 
-// setup function to initialize common elements for the tests
 func setup() (*gin.Engine, *usecase.MockSongUseCase, *validator.Validate) {
 	gin.SetMode(gin.TestMode)
 	logrusCustom.InitLogger()
@@ -50,7 +49,6 @@ func performRequest(r *gin.Engine, method, url string) (*httptest.ResponseRecord
 	return w, nil
 }
 
-// Test success scenario
 func TestGetSongsHandler_Success(t *testing.T) {
 	r, mockUseCase, _ := setup()
 
@@ -90,7 +88,6 @@ func TestGetSongsHandler_Success(t *testing.T) {
 	assert.Equal(t, mockSongs, response["songs"])
 }
 
-// Test songs not found scenario
 func TestGetSongsHandler_FailureSongsNotFound(t *testing.T) {
 	r, mockUseCase, _ := setup()
 
@@ -118,7 +115,6 @@ func TestGetSongsHandler_FailureSongsNotFound(t *testing.T) {
 	assert.Equal(t, song.SongsNotFound.Error(), response["error"])
 }
 
-// Test bind query error scenario
 func TestGetSongsHandler_BindQueryError(t *testing.T) {
 	r, _, _ := setup()
 
@@ -137,7 +133,6 @@ func TestGetSongsHandler_BindQueryError(t *testing.T) {
 	assert.Equal(t, song.InvalidInputData.Error(), response["error"])
 }
 
-// Test validation error scenario
 func TestGetSongsHandler_ValidateQueryError(t *testing.T) {
 	r, _, _ := setup()
 
@@ -156,7 +151,6 @@ func TestGetSongsHandler_ValidateQueryError(t *testing.T) {
 	assert.Equal(t, song.InvalidInputData.Error(), response["error"])
 }
 
-// Test timeout scenario
 func TestGetSongsHandler_TimeoutFailure(t *testing.T) {
 	r, mockUseCase, _ := setup()
 

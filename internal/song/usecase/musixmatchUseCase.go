@@ -50,7 +50,7 @@ type GetSongIPResult struct {
 }
 
 type TrackWrapper struct {
-	Track Track `json:"track"` // Здесь содержится сам трек
+	Track Track `json:"track"`
 }
 
 type Track struct {

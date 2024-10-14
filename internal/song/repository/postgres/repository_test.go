@@ -14,7 +14,6 @@ import (
 func TestGetSongsRepository_Success(t *testing.T) {
 	mockRepo := new(MockRepository)
 
-	// Настройка тестовых данных
 	gsdto := &dtos.GetSongsDTO{
 		Name:      "testsong",
 		GroupName: "testgroup",
@@ -22,7 +21,6 @@ func TestGetSongsRepository_Success(t *testing.T) {
 		PageSize:  10,
 	}
 
-	// Подготовка мок-данных
 	mockSongs := []models.Song{
 		{
 			ID:          uuid.New(),
@@ -35,7 +33,6 @@ func TestGetSongsRepository_Success(t *testing.T) {
 		},
 	}
 
-	// Настройка мока для возврата данных
 	mockRepo.On("GetSongs", mock.Anything, gsdto).Return(mockSongs, nil)
 
 	ctx := context.Background()
