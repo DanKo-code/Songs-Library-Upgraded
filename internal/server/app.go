@@ -28,8 +28,7 @@ import (
 
 type App struct {
 	httpServer *http.Server
-
-	songUC song.UseCase
+	songUC     song.UseCase
 }
 
 func NewApp() *App {
@@ -57,6 +56,7 @@ func NewApp() *App {
 }
 
 func (a *App) Run(port string) error {
+
 	router := gin.Default()
 
 	validate := validator.New()
