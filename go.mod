@@ -3,7 +3,7 @@ module SongsLibrary
 go 1.23
 
 require (
-	github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.5
+	github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.6
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/google/uuid v1.6.0

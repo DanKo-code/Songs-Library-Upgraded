@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"net/http"
 	"os"
@@ -19,10 +20,11 @@ import (
 
 type AppGRPC struct {
 	gRPCServer *grpc.Server
+	gRPCClient *grpc.ClientConn
 	songUC     song.UseCase
 }
 
-func NewAppGRPC() *AppGRPC {
+func NewAppGRPC() (*AppGRPC, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered NewApp function"))
 
@@ -41,9 +43,15 @@ func NewAppGRPC() *AppGRPC {
 		&http.Client{},
 	)
 
-	return &AppGRPC{
-		songUC: songusecase.NewSongUseCase(songRepo, musixMatchUseCase),
+	//gRPCClient
+	conn, err := grpc.NewClient("localhost:3025", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to gRPC server: %w", err)
 	}
+
+	return &AppGRPC{
+		songUC: songusecase.NewSongUseCase(songRepo, musixMatchUseCase, conn),
+	}, nil
 }
 
 func (app *AppGRPC) Run(port string) error {
@@ -80,6 +88,14 @@ func (app *AppGRPC) Run(port string) error {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("stopping gRPC server %s", port))
 	app.gRPCServer.GracefulStop()
+
+	if app.gRPCClient != nil {
+		if err := app.gRPCClient.Close(); err != nil {
+			logrusCustom.LogWithLocation(logrus.ErrorLevel, fmt.Sprintf("Failed to close gRPC connection: %v", err))
+		} else {
+			logrusCustom.LogWithLocation(logrus.InfoLevel, "gRPC connection closed successfully")
+		}
+	}
 
 	return nil
 }

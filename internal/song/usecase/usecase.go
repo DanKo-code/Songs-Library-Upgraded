@@ -7,8 +7,10 @@ import (
 	logrusCustom "SongsLibrary/pkg/logger"
 	"context"
 	"fmt"
+	songv1pb "github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded/protos/gen/go/song"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"strings"
 	"time"
 )
@@ -16,10 +18,11 @@ import (
 type SongUseCase struct {
 	songRepo          song.Repository
 	musixMatchUseCase song.MusixmatchUseCase
+	gRPCClient        *grpc.ClientConn
 }
 
-func NewSongUseCase(songRepo song.Repository, musixMatchUseCase song.MusixmatchUseCase) *SongUseCase {
-	return &SongUseCase{songRepo: songRepo, musixMatchUseCase: musixMatchUseCase}
+func NewSongUseCase(songRepo song.Repository, musixMatchUseCase song.MusixmatchUseCase, gRPCClient *grpc.ClientConn) *SongUseCase {
+	return &SongUseCase{songRepo: songRepo, musixMatchUseCase: musixMatchUseCase, gRPCClient: gRPCClient}
 }
 
 func (suc *SongUseCase) GetSongs(ctx context.Context, gsdto *dtos.GetSongsDTO) ([]models.Song, error) {
@@ -78,10 +81,26 @@ func (suc *SongUseCase) CreateSong(ctx context.Context, group, songName string) 
 		return nil, song.AuthorAlreadyExists
 	}
 
-	ip, link, releaseDate, trackName, artistName, err := suc.musixMatchUseCase.GetSongData(ctx, group, songName)
+	//monolith
+	/*ip, link, releaseDate, trackName, artistName, err := suc.musixMatchUseCase.GetSongData(ctx, group, songName)
 	if err != nil {
 		return nil, err
+	}*/
+
+	//micro services
+	songv1pbClient := songv1pb.NewSongDataClient(suc.gRPCClient)
+
+	getSongDataResponse, err := songv1pbClient.GetSongData(ctx, &songv1pb.GetSongDataRequest{Group: group, SongName: songName})
+	if err != nil {
+		logrusCustom.LogWithLocation(logrus.ErrorLevel, err.Error())
+		return nil, err
 	}
+
+	ip := getSongDataResponse.GetIp()
+	link := getSongDataResponse.GetLink()
+	releaseDate := getSongDataResponse.GetReleaseDate()
+	trackName := getSongDataResponse.GetTrackName()
+	artistName := getSongDataResponse.GetArtistName()
 
 	lyrics, err := suc.musixMatchUseCase.GetLyrics(ctx, ip)
 	if err != nil {

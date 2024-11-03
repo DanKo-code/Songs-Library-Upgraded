@@ -30,7 +30,10 @@ func main() {
 }
 
 func startHTTPServer() {
-	app := server.NewApp()
+	app, err := server.NewApp()
+	if err != nil {
+		logrusCustom.Logger.Fatalf("Failed to create App")
+	}
 
 	if err := app.Run(os.Getenv("APP_PORT")); err != nil {
 		logrusCustom.Logger.Fatalf("Error when running server: %s", err.Error())
@@ -38,10 +41,12 @@ func startHTTPServer() {
 }
 
 func startGRPCServer() {
-	app := server.NewAppGRPC()
-
-	err := app.Run(os.Getenv("APP_PORT"))
+	app, err := server.NewAppGRPC()
 	if err != nil {
+		logrusCustom.Logger.Fatalf("Failed to create App")
+	}
+
+	if err := app.Run(os.Getenv("APP_PORT")); err != nil {
 		logrusCustom.Logger.Fatalf("Error when running server: %s", err.Error())
 	}
 }

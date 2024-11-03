@@ -7,7 +7,7 @@ import (
 	logrusCustom "SongsLibrary/pkg/logger"
 	"context"
 	"fmt"
-	ssov1 "github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded/protos/gen/go/song"
+	songv1 "github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded/protos/gen/go/song"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -19,19 +19,19 @@ import (
 )
 
 type serverGRPC struct {
-	ssov1.UnimplementedSongServer
+	songv1.UnimplementedSongServer
 	validate *validator.Validate
 	usecase  song.UseCase
 }
 
 func Register(gRPC *grpc.Server, validator *validator.Validate, usecase song.UseCase) {
-	ssov1.RegisterSongServer(gRPC, &serverGRPC{
+	songv1.RegisterSongServer(gRPC, &serverGRPC{
 		validate: validator,
 		usecase:  usecase,
 	})
 }
 
-func (s *serverGRPC) GetSongs(ctx context.Context, req *ssov1.GetSongsRequest) (*ssov1.GetSongsResponseList, error) {
+func (s *serverGRPC) GetSongs(ctx context.Context, req *songv1.GetSongsRequest) (*songv1.GetSongsResponseList, error) {
 
 	var gsdto dtos.GetSongsDTO
 
@@ -80,12 +80,12 @@ func (s *serverGRPC) GetSongs(ctx context.Context, req *ssov1.GetSongsRequest) (
 	return songsResponseList, nil
 }
 
-func convertSongToSongsResponseList(songsList []models.Song) *ssov1.GetSongsResponseList {
+func convertSongToSongsResponseList(songsList []models.Song) *songv1.GetSongsResponseList {
 
-	var songsResponseList ssov1.GetSongsResponseList
+	var songsResponseList songv1.GetSongsResponseList
 
 	for _, specificSong := range songsList {
-		songsResponseList.Songs = append(songsResponseList.GetSongs(), &ssov1.GetSongsResponse{
+		songsResponseList.Songs = append(songsResponseList.GetSongs(), &songv1.GetSongsResponse{
 			Id:          specificSong.ID.String(),
 			Name:        specificSong.Name,
 			AuthorId:    specificSong.AuthorId.String(),
@@ -99,7 +99,7 @@ func convertSongToSongsResponseList(songsList []models.Song) *ssov1.GetSongsResp
 	return &songsResponseList
 }
 
-func (s *serverGRPC) DeleteSong(ctx context.Context, req *ssov1.DeleteSongsRequest) (*ssov1.DeleteSongsResponse, error) {
+func (s *serverGRPC) DeleteSong(ctx context.Context, req *songv1.DeleteSongsRequest) (*songv1.DeleteSongsResponse, error) {
 	id := req.GetId()
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered DeleteSong Hanlder with parameter: %s", id))
@@ -127,7 +127,7 @@ func (s *serverGRPC) DeleteSong(ctx context.Context, req *ssov1.DeleteSongsReque
 		return nil, status.Error(codes.Internal, "")
 	}
 
-	return &ssov1.DeleteSongsResponse{
+	return &songv1.DeleteSongsResponse{
 		Id:          deletedSong.ID.String(),
 		Name:        deletedSong.Name,
 		AuthorId:    deletedSong.AuthorId.String(),

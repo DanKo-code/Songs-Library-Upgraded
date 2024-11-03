@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -31,7 +32,7 @@ type App struct {
 	songUC     song.UseCase
 }
 
-func NewApp() *App {
+func NewApp() (*App, error) {
 
 	logrusCustom.LogWithLocation(logrus.InfoLevel, fmt.Sprintf("Entered NewApp function"))
 
@@ -50,9 +51,15 @@ func NewApp() *App {
 		&http.Client{},
 	)
 
-	return &App{
-		songUC: songusecase.NewSongUseCase(songRepo, musixMatchUseCase),
+	//conn, err := grpc.NewClient("localhost:3025", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("127.0.0.1:3024", grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to gRPC server: %w", err)
 	}
+
+	return &App{
+		songUC: songusecase.NewSongUseCase(songRepo, musixMatchUseCase, conn),
+	}, nil
 }
 
 func (a *App) Run(port string) error {

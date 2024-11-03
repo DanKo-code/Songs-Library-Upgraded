@@ -6,6 +6,8 @@ github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.4 h1:QcnHFNFyV1rO
 github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.4/go.mod h1:KUUQVu56/gfYJN9338plwFg6ELg4ZKtsu7vXSuWPJr8=
 github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.5 h1:mcuQ0jNgrxIqGqik2VDsrEUldCGYro0Ch6FkmvcW6T4=
 github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.5/go.mod h1:KUUQVu56/gfYJN9338plwFg6ELg4ZKtsu7vXSuWPJr8=
+github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.6 h1:eOAVU7dy2LFTphACrO5N50oQBfmm01A6j5KRpikYaLU=
+github.com/DanKo-code/Protobuf-For-Songs-Library-Upgraded v0.0.6/go.mod h1:KUUQVu56/gfYJN9338plwFg6ELg4ZKtsu7vXSuWPJr8=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/bytedance/sonic v1.12.3 h1:W2MGa7RCU1QTeYRTPE3+88mVC0yXmsRQRChiyVocVjU=
